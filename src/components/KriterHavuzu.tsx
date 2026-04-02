@@ -120,6 +120,17 @@ export default function KriterHavuzu({
             />
           </div>
         </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Dönem</Label>
+          <Select value={donem} onValueChange={onDonemChange}>
+            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {donemler.map((d) => (
+                <SelectItem key={d} value={d}>{d}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" onClick={clearFilters}>
             <X className="mr-1 h-4 w-4" /> Temizle
