@@ -38,6 +38,7 @@ const EMPTY_FORM = {
 
 export default function KriterHavuzu({
   kriterler, onAdd, onUpdate, onDelete, onToggleAktif, readOnly,
+  donem, onDonemChange, donemler,
 }: Props) {
   const [filterTip, setFilterTip] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
