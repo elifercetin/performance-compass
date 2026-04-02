@@ -23,6 +23,9 @@ interface Props {
   onDelete: (id: string) => void;
   onToggleAktif: (id: string) => void;
   readOnly: boolean;
+  donem: string;
+  onDonemChange: (d: string) => void;
+  donemler: string[];
 }
 
 const EMPTY_FORM = {
@@ -35,6 +38,7 @@ const EMPTY_FORM = {
 
 export default function KriterHavuzu({
   kriterler, onAdd, onUpdate, onDelete, onToggleAktif, readOnly,
+  donem, onDonemChange, donemler,
 }: Props) {
   const [filterTip, setFilterTip] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
@@ -115,6 +119,17 @@ export default function KriterHavuzu({
               className="w-[250px] pl-8"
             />
           </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Dönem</Label>
+          <Select value={donem} onValueChange={onDonemChange}>
+            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {donemler.map((d) => (
+                <SelectItem key={d} value={d}>{d}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" onClick={clearFilters}>
