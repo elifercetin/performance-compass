@@ -5,7 +5,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "1",
     kriterTipi: "İş Güvenliği ve Kurallara Uyum",
-    ustKriter: "KKD Kullanımı",
+    ustKriter: "Kişisel Koruyucu Donanım (KKD) Kullanımı",
     kriterAdi: "Baret Kullanımı",
     tanim: "İş alanında baret kullanım durumu",
     aktif: true,
@@ -15,7 +15,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "2",
     kriterTipi: "İş Güvenliği ve Kurallara Uyum",
-    ustKriter: "KKD Kullanımı",
+    ustKriter: "Kişisel Koruyucu Donanım (KKD) Kullanımı",
     kriterAdi: "Eldiven Kullanımı",
     tanim: "Uygun eldiven kullanım durumu",
     aktif: true,
@@ -25,7 +25,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "3",
     kriterTipi: "Teknik Bilgi ve Beceri",
-    ustKriter: "Makine Kullanımı",
+    ustKriter: "Makine/Ekipman Kullanma Becerisi",
     kriterAdi: "CNC Tezgah Kullanımı",
     tanim: "CNC tezgah işletme becerisi",
     aktif: true,
@@ -35,7 +35,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "4",
     kriterTipi: "İş Performansı",
-    ustKriter: "Üretkenlik",
+    ustKriter: "İş Planına Uyum",
     kriterAdi: "Günlük Üretim Miktarı",
     tanim: "Günlük hedeflenen üretim miktarına ulaşma",
     aktif: true,
@@ -45,7 +45,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "5",
     kriterTipi: "İş Disiplini",
-    ustKriter: "Devam/Devamsızlık",
+    ustKriter: "İşe Devam/Devamsızlık Düzeyi",
     kriterAdi: "İşe Geliş Düzeni",
     tanim: "Düzenli işe devam durumu",
     aktif: true,
@@ -55,7 +55,7 @@ const INITIAL_KRITERLER: Kriter[] = [
   {
     id: "6",
     kriterTipi: "Davranışsal Kriterler",
-    ustKriter: "Takım Çalışması",
+    ustKriter: "Aktif Dinleme ve İletişim",
     kriterAdi: "Ekip İçi Uyum",
     tanim: "Ekip üyeleriyle uyumlu çalışabilme",
     aktif: true,
