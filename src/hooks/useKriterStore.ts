@@ -1,20 +1,23 @@
 import { useState, useCallback } from "react";
 import { Kriter, KriterTipi, KRITER_TIPLERI, VARSAYILAN_KRITERLER } from "@/types/kriter";
 
-// Generate initial criteria from the default map
+// Generate initial criteria from the 3-level default map
 const INITIAL_KRITERLER: Kriter[] = [];
 let idCounter = 1;
 for (const tip of KRITER_TIPLERI) {
-  for (const ad of VARSAYILAN_KRITERLER[tip]) {
-    INITIAL_KRITERLER.push({
-      id: String(idCounter++),
-      kriterTipi: tip,
-      kriterAdi: ad,
-      tanim: "",
-      aktif: true,
-      kullanimda: false,
-      agirlikPuani: 0,
-    });
+  const ustKriterler = VARSAYILAN_KRITERLER[tip];
+  for (const [ustKriter, altKriterler] of Object.entries(ustKriterler)) {
+    for (const kriterAdi of altKriterler) {
+      INITIAL_KRITERLER.push({
+        id: String(idCounter++),
+        kriterTipi: tip,
+        ustKriter,
+        kriterAdi,
+        aktif: true,
+        kullanimda: false,
+        agirlikPuani: 0,
+      });
+    }
   }
 }
 
