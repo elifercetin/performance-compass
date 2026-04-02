@@ -13,6 +13,7 @@ for (const tip of KRITER_TIPLERI) {
         kriterTipi: tip,
         ustKriter,
         kriterAdi,
+        donem: new Date().getFullYear().toString(),
         aktif: true,
         kullanimda: false,
         agirlikPuani: 0,
