@@ -91,6 +91,20 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
       {/* Summary bar */}
       <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm text-muted-foreground">Dönem:</Label>
+            <Select value={donem} onValueChange={onDonemChange}>
+              <SelectTrigger className="w-[100px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {donemler.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="h-6 w-px bg-border" />
           <span className="text-sm font-medium">Genel Toplam:</span>
           <Badge
             variant={genelToplam === 100 ? "default" : "destructive"}
