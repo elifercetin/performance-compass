@@ -92,7 +92,7 @@ export default function KriterHavuzu({
   };
 
   const handleSave = () => {
-    if (!form.kriterTipi || !form.ustKriter || !form.kriterAdi) return;
+    if (!form.kriterTipi || !form.ustKriter || !form.kriterAdi || !form.donem) return;
     if (editingId) {
       onUpdate(editingId, form as Partial<Kriter>);
     } else {
