@@ -84,6 +84,7 @@ export default function KriterHavuzu({
       kriterTipi: k.kriterTipi,
       ustKriter: k.ustKriter,
       kriterAdi: k.kriterAdi,
+      donem: k.donem || CURRENT_YEAR,
       aktif: k.aktif,
       agirlikPuani: k.agirlikPuani,
     });
