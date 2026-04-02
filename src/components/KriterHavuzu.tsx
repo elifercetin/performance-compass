@@ -149,6 +149,7 @@ export default function KriterHavuzu({
           <TableHeader>
             <TableRow>
               <TableHead>Kriter Tipi</TableHead>
+              <TableHead>Üst Kriter Adı</TableHead>
               <TableHead>Kriter Adı</TableHead>
               <TableHead className="text-center">Performans Atama Durumu</TableHead>
               <TableHead className="text-right">İşlemler</TableHead>
@@ -157,13 +158,14 @@ export default function KriterHavuzu({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Kayıt bulunamadı
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((k) => (
                 <TableRow key={k.id}>
+                  <TableCell>{k.kriterTipi}</TableCell>
                   <TableCell>{k.kriterTipi}</TableCell>
                   <TableCell className="font-medium">{k.kriterAdi}</TableCell>
                   <TableCell className="text-center">
