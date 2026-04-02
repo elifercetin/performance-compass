@@ -264,12 +264,26 @@ export default function KriterHavuzu({
                 placeholder="Kriterin detaylı açıklaması"
               />
             </div>
+            <div className="space-y-1">
+              <Label>Dönem *</Label>
+              <Select
+                value={form.donem}
+                onValueChange={(v) => setForm({ ...form, donem: v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Dönem seçiniz" /></SelectTrigger>
+                <SelectContent>
+                  {donemler.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button
               onClick={handleSave}
-              disabled={!form.kriterTipi || !form.ustKriter || !form.kriterAdi}
+              disabled={!form.kriterTipi || !form.ustKriter || !form.kriterAdi || !form.donem}
             >
               Kaydet
             </Button>
