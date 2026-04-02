@@ -1,36 +1,21 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Kriter, KriterTipi, KRITER_TIPLERI } from "@/types/kriter";
+import { Kriter, KRITER_TIPLERI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Save, AlertTriangle } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface Props {
   kriterler: Kriter[];
   onSave: (kriterler: Kriter[]) => void;
   readOnly: boolean;
-}
-
-interface GroupedData {
-  [tip: string]: {
-    [ustKriter: string]: Kriter[];
-  };
 }
 
 export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly }: Props) {
@@ -43,13 +28,9 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
     setIsDirty(false);
   }, [initialKriterler]);
 
-  // Warn on page leave
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+      if (isDirty) { e.preventDefault(); e.returnValue = ""; }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
@@ -60,35 +41,22 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
     [localKriterler]
   );
 
-  const grouped = useMemo<GroupedData>(() => {
-    const result: GroupedData = {};
-    for (const tip of KRITER_TIPLERI) {
-      result[tip] = {};
-    }
+  const grouped = useMemo(() => {
+    const result: Record<string, Kriter[]> = {};
+    for (const tip of KRITER_TIPLERI) result[tip] = [];
     for (const k of aktifKriterler) {
-      if (!result[k.kriterTipi]) result[k.kriterTipi] = {};
-      if (!result[k.kriterTipi][k.ustKriter]) result[k.kriterTipi][k.ustKriter] = [];
-      result[k.kriterTipi][k.ustKriter].push(k);
+      if (!result[k.kriterTipi]) result[k.kriterTipi] = [];
+      result[k.kriterTipi].push(k);
     }
     return result;
   }, [aktifKriterler]);
 
-  // Tip-level weights (sum of all sub-criteria under each tip)
   const tipTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const tip of KRITER_TIPLERI) {
       totals[tip] = aktifKriterler
         .filter((k) => k.kriterTipi === tip)
         .reduce((sum, k) => sum + k.agirlikPuani, 0);
-    }
-    return totals;
-  }, [aktifKriterler]);
-
-  const ustKriterTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    for (const k of aktifKriterler) {
-      const key = `${k.kriterTipi}::${k.ustKriter}`;
-      totals[key] = (totals[key] || 0) + k.agirlikPuani;
     }
     return totals;
   }, [aktifKriterler]);
@@ -137,13 +105,11 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
         )}
       </div>
 
-      {/* Accordion hierarchy */}
+      {/* Accordion: Tip → Kriterler */}
       <Accordion type="multiple" defaultValue={KRITER_TIPLERI.map(String)} className="space-y-2">
         {KRITER_TIPLERI.map((tip) => {
-          const ustKriterMap = grouped[tip] || {};
-          const ustKriterKeys = Object.keys(ustKriterMap);
-          if (ustKriterKeys.length === 0) return null;
-
+          const items = grouped[tip] || [];
+          if (items.length === 0) return null;
           const tipTotal = tipTotals[tip] || 0;
 
           return (
@@ -164,68 +130,32 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-0 pb-0">
-                {ustKriterKeys.map((ustKriter) => {
-                  const items = ustKriterMap[ustKriter];
-                  const ustKey = `${tip}::${ustKriter}`;
-                  const ustTotal = ustKriterTotals[ustKey] || 0;
-
-                  return (
-                    <div key={ustKriter} className="border-t border-border">
-                      <div className="flex items-center justify-between bg-muted/50 px-6 py-2">
-                        <span className="text-sm font-medium text-foreground">{ustKriter}</span>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              ustTotal === 100
-                                ? "default"
-                                : ustTotal > 100
-                                ? "destructive"
-                                : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            %{ustTotal}
-                          </Badge>
-                          {ustTotal !== 100 && items.length > 0 && (
-                            <span className="text-xs text-destructive">
-                              Alt kriterlerin toplamı %100 olmalı
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {items.map((k) => (
-                        <div
-                          key={k.id}
-                          className="flex items-center justify-between border-t border-border/50 px-8 py-2.5"
-                        >
-                          <div>
-                            <span className="text-sm">{k.kriterAdi}</span>
-                            <p className="text-xs text-muted-foreground">{k.tanim}</p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">%</span>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={100}
-                              value={k.agirlikPuani}
-                              onChange={(e) => handleWeightChange(k.id, e.target.value)}
-                              className="w-[70px] text-center h-8"
-                              disabled={readOnly}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                {items.map((k) => (
+                  <div
+                    key={k.id}
+                    className="flex items-center justify-between border-t border-border/50 px-6 py-2.5"
+                  >
+                    <span className="text-sm">{k.kriterAdi}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">%</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={k.agirlikPuani}
+                        onChange={(e) => handleWeightChange(k.id, e.target.value)}
+                        className="w-[70px] text-center h-8"
+                        disabled={readOnly}
+                      />
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </AccordionContent>
             </AccordionItem>
           );
         })}
       </Accordion>
 
-      {/* Leave warning */}
       <AlertDialog open={showLeaveWarning} onOpenChange={setShowLeaveWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
