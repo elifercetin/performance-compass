@@ -103,6 +103,9 @@ export default function Index() {
               kriterler={kriterler}
               onSave={handleSaveWeights}
               readOnly={readOnly}
+              donem={donem}
+              onDonemChange={setDonem}
+              donemler={DONEMLER}
             />
           </TabsContent>
         </Tabs>

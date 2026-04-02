@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Save, AlertTriangle } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -16,9 +20,12 @@ interface Props {
   kriterler: Kriter[];
   onSave: (kriterler: Kriter[]) => void;
   readOnly: boolean;
+  donem: string;
+  onDonemChange: (d: string) => void;
+  donemler: string[];
 }
 
-export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly }: Props) {
+export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly, donem, onDonemChange, donemler }: Props) {
   const [localKriterler, setLocalKriterler] = useState<Kriter[]>(initialKriterler);
   const [isDirty, setIsDirty] = useState(false);
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
@@ -84,6 +91,20 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
       {/* Summary bar */}
       <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm text-muted-foreground">Dönem:</Label>
+            <Select value={donem} onValueChange={onDonemChange}>
+              <SelectTrigger className="w-[100px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {donemler.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="h-6 w-px bg-border" />
           <span className="text-sm font-medium">Genel Toplam:</span>
           <Badge
             variant={genelToplam === 100 ? "default" : "destructive"}
