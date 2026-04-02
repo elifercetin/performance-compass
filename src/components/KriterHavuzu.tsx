@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Kriter, KriterTipi, KRITER_TIPLERI } from "@/types/kriter";
+import { Kriter, KriterTipi, KRITER_TIPLERI, VARSAYILAN_KRITERLER } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -30,8 +30,8 @@ interface Props {
 
 const EMPTY_FORM = {
   kriterTipi: "" as KriterTipi | "",
+  ustKriter: "",
   kriterAdi: "",
-  tanim: "",
   aktif: true,
   agirlikPuani: 0,
 };
@@ -53,11 +53,21 @@ export default function KriterHavuzu({
       if (filterTip !== "Tumu" && k.kriterTipi !== filterTip) return false;
       if (debouncedSearch) {
         const s = debouncedSearch.toLowerCase();
-        if (!k.kriterAdi.toLowerCase().includes(s)) return false;
+        if (
+          !k.kriterAdi.toLowerCase().includes(s) &&
+          !k.ustKriter.toLowerCase().includes(s)
+        ) return false;
       }
       return true;
     });
   }, [kriterler, filterTip, debouncedSearch]);
+
+  // Get üst kriter options based on selected kriter tipi
+  const ustKriterOptions = useMemo(() => {
+    if (!form.kriterTipi) return [];
+    const ustMap = VARSAYILAN_KRITERLER[form.kriterTipi as KriterTipi];
+    return ustMap ? Object.keys(ustMap) : [];
+  }, [form.kriterTipi]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -69,8 +79,8 @@ export default function KriterHavuzu({
     setEditingId(k.id);
     setForm({
       kriterTipi: k.kriterTipi,
+      ustKriter: k.ustKriter,
       kriterAdi: k.kriterAdi,
-      tanim: k.tanim,
       aktif: k.aktif,
       agirlikPuani: k.agirlikPuani,
     });
@@ -78,7 +88,7 @@ export default function KriterHavuzu({
   };
 
   const handleSave = () => {
-    if (!form.kriterTipi || !form.kriterAdi) return;
+    if (!form.kriterTipi || !form.ustKriter || !form.kriterAdi) return;
     if (editingId) {
       onUpdate(editingId, form as Partial<Kriter>);
     } else {
@@ -166,7 +176,7 @@ export default function KriterHavuzu({
               filtered.map((k) => (
                 <TableRow key={k.id}>
                   <TableCell>{k.kriterTipi}</TableCell>
-                  <TableCell>{k.kriterTipi}</TableCell>
+                  <TableCell>{k.ustKriter}</TableCell>
                   <TableCell className="font-medium">{k.kriterAdi}</TableCell>
                   <TableCell className="text-center">
                     <Switch
@@ -216,7 +226,7 @@ export default function KriterHavuzu({
               <Label>Kriter Tipi *</Label>
               <Select
                 value={form.kriterTipi}
-                onValueChange={(v) => setForm({ ...form, kriterTipi: v as KriterTipi })}
+                onValueChange={(v) => setForm({ ...form, kriterTipi: v as KriterTipi, ustKriter: "" })}
               >
                 <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
                 <SelectContent>
@@ -227,19 +237,27 @@ export default function KriterHavuzu({
               </Select>
             </div>
             <div className="space-y-1">
+              <Label>Üst Kriter *</Label>
+              <Select
+                value={form.ustKriter}
+                onValueChange={(v) => setForm({ ...form, ustKriter: v })}
+                disabled={!form.kriterTipi}
+              >
+                <SelectTrigger><SelectValue placeholder="Önce kriter tipi seçiniz" /></SelectTrigger>
+                <SelectContent>
+                  {ustKriterOptions.map((u) => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
               <Label>Kriter Adı *</Label>
               <Input
                 value={form.kriterAdi}
                 onChange={(e) => setForm({ ...form, kriterAdi: e.target.value })}
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Tanım</Label>
-              <Input
-                value={form.tanim}
-                onChange={(e) => setForm({ ...form, tanim: e.target.value })}
-                maxLength={500}
+                maxLength={300}
+                placeholder="Kriterin detaylı açıklaması"
               />
             </div>
           </div>
@@ -247,7 +265,7 @@ export default function KriterHavuzu({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button
               onClick={handleSave}
-              disabled={!form.kriterTipi || !form.kriterAdi}
+              disabled={!form.kriterTipi || !form.ustKriter || !form.kriterAdi}
             >
               Kaydet
             </Button>

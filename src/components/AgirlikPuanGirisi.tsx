@@ -135,7 +135,11 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
                     key={k.id}
                     className="flex items-center justify-between border-t border-border/50 px-6 py-2.5"
                   >
-                    <span className="text-sm">{k.kriterAdi}</span>
+                    <div className="text-sm">
+                      <span className="font-medium text-muted-foreground">{k.ustKriter}</span>
+                      <span className="mx-1.5 text-muted-foreground/50">›</span>
+                      <span>{k.kriterAdi}</span>
+                    </div>
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-muted-foreground">%</span>
                       <Input
