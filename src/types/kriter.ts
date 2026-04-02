@@ -15,7 +15,7 @@ export interface Kriter {
   kriterAdi: string;
   tanim: string;
   aktif: boolean;
-  kullanimda: boolean; // geçmişte kullanıldı mı
+  kullanimda: boolean;
   agirlikPuani: number;
 }
 
@@ -25,28 +25,31 @@ export interface UstKriterMap {
 
 export const UST_KRITERLER: UstKriterMap = {
   "İş Güvenliği ve Kurallara Uyum": [
-    "KKD Kullanımı",
-    "İSG Kurallarına Uyum",
-    "Çevre ve Atık Yönetimi",
+    "Kişisel Koruyucu Donanım (KKD) Kullanımı",
+    "İş Güvenliği Prosedürlerine Uyum",
+    "Kaza ve Olay Geçmişi",
+    "İSG Farkındalık Düzeyi",
   ],
   "Teknik Bilgi ve Beceri": [
-    "Makine Kullanımı",
-    "Üretim Teknikleri",
-    "Kalite Kontrol",
+    "Makine/Ekipman Kullanma Becerisi",
+    "Yeni Beceriler Öğrenme İsteği",
+    "Sertifikasyon/Donanım Düzeyi",
+    "Mevzuat ve Standart Bilgisi",
   ],
   "İş Performansı": [
-    "Üretkenlik",
-    "Hedef Gerçekleştirme",
-    "Verimlilik",
+    "İş Planına Uyum",
+    "İşin Kalite Kriterlerine Uyumu",
+    "Hata Oranı",
+    "Verimlilik Düzeyi",
   ],
   "İş Disiplini": [
-    "Devam/Devamsızlık",
-    "Mesai Uyumu",
-    "İş Yeri Düzeni",
+    "İşe Devam/Devamsızlık Düzeyi",
+    "İşe Zamanında Gelme ve İş Saatlerine Uyum",
+    "Kurum Değerlerine Uyum",
   ],
   "Davranışsal Kriterler": [
-    "Takım Çalışması",
-    "İletişim",
-    "Sorumluluk",
+    "Aktif Dinleme ve İletişim",
+    "Dayanıklılık, Esneklik ve Çeviklik",
+    "Çevre Bilinci",
   ],
 };

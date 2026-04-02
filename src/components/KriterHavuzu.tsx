@@ -132,7 +132,7 @@ export default function KriterHavuzu({
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Kriter Tipi</Label>
           <Select value={filterTip} onValueChange={(v) => { setFilterTip(v); setFilterUstKriter("Tumu"); }}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Tumu">Tümü</SelectItem>
               {KRITER_TIPLERI.map((t) => (
@@ -142,23 +142,11 @@ export default function KriterHavuzu({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Üst Kriter</Label>
-          <Select value={filterUstKriter} onValueChange={setFilterUstKriter} disabled={filterTip === "Tumu"}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Tumu">Tümü</SelectItem>
-              {filteredUstKriterler.map((u) => (
-                <SelectItem key={u} value={u}>{u}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Kriter Ara</Label>
+          <Label className="text-xs text-muted-foreground">Kriter Adı</Label>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Kriter adı veya tanım ara..."
+              placeholder="Kriter adı ara..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               className="w-[250px] pl-8"
@@ -183,7 +171,6 @@ export default function KriterHavuzu({
           <TableHeader>
             <TableRow>
               <TableHead>Kriter Adı</TableHead>
-              <TableHead>Tanım</TableHead>
               <TableHead>Kriter Tipi</TableHead>
               <TableHead>Üst Kriter</TableHead>
               <TableHead className="text-center">Durum</TableHead>
@@ -193,7 +180,7 @@ export default function KriterHavuzu({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Kayıt bulunamadı
                 </TableCell>
               </TableRow>
@@ -201,7 +188,6 @@ export default function KriterHavuzu({
               filtered.map((k) => (
                 <TableRow key={k.id}>
                   <TableCell className="font-medium">{k.kriterAdi}</TableCell>
-                  <TableCell className="text-muted-foreground max-w-[300px] truncate">{k.tanim}</TableCell>
                   <TableCell>{k.kriterTipi}</TableCell>
                   <TableCell>{k.ustKriter}</TableCell>
                   <TableCell className="text-center">
