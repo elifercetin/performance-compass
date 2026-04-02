@@ -92,6 +92,9 @@ export default function Index() {
               onDelete={deleteKriter}
               onToggleAktif={toggleAktif}
               readOnly={readOnly}
+              donem={donem}
+              onDonemChange={setDonem}
+              donemler={DONEMLER}
             />
           </TabsContent>
 

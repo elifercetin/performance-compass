@@ -23,6 +23,9 @@ interface Props {
   onDelete: (id: string) => void;
   onToggleAktif: (id: string) => void;
   readOnly: boolean;
+  donem: string;
+  onDonemChange: (d: string) => void;
+  donemler: string[];
 }
 
 const EMPTY_FORM = {
