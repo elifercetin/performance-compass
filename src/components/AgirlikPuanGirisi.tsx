@@ -25,7 +25,7 @@ interface Props {
   donemler: string[];
 }
 
-export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly }: Props) {
+export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly, donem, onDonemChange, donemler }: Props) {
   const [localKriterler, setLocalKriterler] = useState<Kriter[]>(initialKriterler);
   const [isDirty, setIsDirty] = useState(false);
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
