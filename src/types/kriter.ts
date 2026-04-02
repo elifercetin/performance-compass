@@ -13,6 +13,7 @@ export interface Kriter {
   kriterTipi: KriterTipi;
   ustKriter: string;
   kriterAdi: string;
+  donem: string;
   aktif: boolean;
   kullanimda: boolean;
   agirlikPuani: number;
