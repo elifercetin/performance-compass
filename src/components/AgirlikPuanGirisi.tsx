@@ -20,6 +20,9 @@ interface Props {
   kriterler: Kriter[];
   onSave: (kriterler: Kriter[]) => void;
   readOnly: boolean;
+  donem: string;
+  onDonemChange: (d: string) => void;
+  donemler: string[];
 }
 
 export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly }: Props) {
