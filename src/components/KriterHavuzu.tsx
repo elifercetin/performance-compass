@@ -1,29 +1,16 @@
-import { useState, useMemo, useCallback } from "react";
-import { Kriter, KriterTipi, KRITER_TIPLERI, UST_KRITERLER } from "@/types/kriter";
+import { useState, useMemo } from "react";
+import { Kriter, KriterTipi, KRITER_TIPLERI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Pencil, Trash2, Plus, X, Search } from "lucide-react";
@@ -40,7 +27,6 @@ interface Props {
 
 const EMPTY_FORM = {
   kriterTipi: "" as KriterTipi | "",
-  ustKriter: "",
   kriterAdi: "",
   tanim: "",
   aktif: true,
@@ -48,15 +34,9 @@ const EMPTY_FORM = {
 };
 
 export default function KriterHavuzu({
-  kriterler,
-  onAdd,
-  onUpdate,
-  onDelete,
-  onToggleAktif,
-  readOnly,
+  kriterler, onAdd, onUpdate, onDelete, onToggleAktif, readOnly,
 }: Props) {
   const [filterTip, setFilterTip] = useState<string>("Tumu");
-  const [filterUstKriter, setFilterUstKriter] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 300);
 
@@ -64,31 +44,16 @@ export default function KriterHavuzu({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const filteredUstKriterler = useMemo(() => {
-    if (filterTip === "Tumu") return [];
-    return UST_KRITERLER[filterTip] || [];
-  }, [filterTip]);
-
-  const formUstKriterler = useMemo(() => {
-    if (!form.kriterTipi) return [];
-    return UST_KRITERLER[form.kriterTipi] || [];
-  }, [form.kriterTipi]);
-
   const filtered = useMemo(() => {
     return kriterler.filter((k) => {
       if (filterTip !== "Tumu" && k.kriterTipi !== filterTip) return false;
-      if (filterUstKriter !== "Tumu" && k.ustKriter !== filterUstKriter) return false;
       if (debouncedSearch) {
         const s = debouncedSearch.toLowerCase();
-        if (
-          !k.kriterAdi.toLowerCase().includes(s) &&
-          !k.tanim.toLowerCase().includes(s)
-        )
-          return false;
+        if (!k.kriterAdi.toLowerCase().includes(s)) return false;
       }
       return true;
     });
-  }, [kriterler, filterTip, filterUstKriter, debouncedSearch]);
+  }, [kriterler, filterTip, debouncedSearch]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -100,7 +65,6 @@ export default function KriterHavuzu({
     setEditingId(k.id);
     setForm({
       kriterTipi: k.kriterTipi,
-      ustKriter: k.ustKriter,
       kriterAdi: k.kriterAdi,
       tanim: k.tanim,
       aktif: k.aktif,
@@ -110,7 +74,7 @@ export default function KriterHavuzu({
   };
 
   const handleSave = () => {
-    if (!form.kriterTipi || !form.ustKriter || !form.kriterAdi) return;
+    if (!form.kriterTipi || !form.kriterAdi) return;
     if (editingId) {
       onUpdate(editingId, form as Partial<Kriter>);
     } else {
@@ -121,7 +85,6 @@ export default function KriterHavuzu({
 
   const clearFilters = () => {
     setFilterTip("Tumu");
-    setFilterUstKriter("Tumu");
     setSearchText("");
   };
 
@@ -131,7 +94,7 @@ export default function KriterHavuzu({
       <div className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Kriter Tipi</Label>
-          <Select value={filterTip} onValueChange={(v) => { setFilterTip(v); setFilterUstKriter("Tumu"); }}>
+          <Select value={filterTip} onValueChange={setFilterTip}>
             <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Tumu">Tümü</SelectItem>
@@ -170,26 +133,24 @@ export default function KriterHavuzu({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kriter Adı</TableHead>
               <TableHead>Kriter Tipi</TableHead>
-              <TableHead>Üst Kriter</TableHead>
-              <TableHead className="text-center">Durum</TableHead>
+              <TableHead>Kriter Adı</TableHead>
+              <TableHead className="text-center">Performans Atama Durumu</TableHead>
               <TableHead className="text-right">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                   Kayıt bulunamadı
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((k) => (
                 <TableRow key={k.id}>
-                  <TableCell className="font-medium">{k.kriterAdi}</TableCell>
                   <TableCell>{k.kriterTipi}</TableCell>
-                  <TableCell>{k.ustKriter}</TableCell>
+                  <TableCell className="font-medium">{k.kriterAdi}</TableCell>
                   <TableCell className="text-center">
                     <Switch
                       checked={k.aktif}
@@ -223,7 +184,7 @@ export default function KriterHavuzu({
           </TableBody>
         </Table>
         <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
-          Listelenen 1 ile {filtered.length} arası {filtered.length} kayıt
+          Toplam {filtered.length} kayıt listeleniyor
         </div>
       </div>
 
@@ -238,29 +199,12 @@ export default function KriterHavuzu({
               <Label>Kriter Tipi *</Label>
               <Select
                 value={form.kriterTipi}
-                onValueChange={(v) =>
-                  setForm({ ...form, kriterTipi: v as KriterTipi, ustKriter: "" })
-                }
+                onValueChange={(v) => setForm({ ...form, kriterTipi: v as KriterTipi })}
               >
                 <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
                 <SelectContent>
                   {KRITER_TIPLERI.map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Üst Kriter *</Label>
-              <Select
-                value={form.ustKriter}
-                onValueChange={(v) => setForm({ ...form, ustKriter: v })}
-                disabled={!form.kriterTipi}
-              >
-                <SelectTrigger><SelectValue placeholder="Önce kriter tipi seçin" /></SelectTrigger>
-                <SelectContent>
-                  {formUstKriterler.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -286,7 +230,7 @@ export default function KriterHavuzu({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button
               onClick={handleSave}
-              disabled={!form.kriterTipi || !form.ustKriter || !form.kriterAdi}
+              disabled={!form.kriterTipi || !form.kriterAdi}
             >
               Kaydet
             </Button>

@@ -11,7 +11,6 @@ export type KriterTipi = (typeof KRITER_TIPLERI)[number];
 export interface Kriter {
   id: string;
   kriterTipi: KriterTipi;
-  ustKriter: string;
   kriterAdi: string;
   tanim: string;
   aktif: boolean;
@@ -19,13 +18,9 @@ export interface Kriter {
   agirlikPuani: number;
 }
 
-export interface UstKriterMap {
-  [tip: string]: string[];
-}
-
-export const UST_KRITERLER: UstKriterMap = {
+export const VARSAYILAN_KRITERLER: Record<KriterTipi, string[]> = {
   "İş Güvenliği ve Kurallara Uyum": [
-    "Kişisel Koruyucu Donanım (KKD) Kullanımı",
+    "KKD Kullanımı",
     "İş Güvenliği Prosedürlerine Uyum",
     "Kaza ve Olay Geçmişi",
     "İSG Farkındalık Düzeyi",
