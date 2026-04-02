@@ -28,10 +28,13 @@ interface Props {
   donemler: string[];
 }
 
+const CURRENT_YEAR = new Date().getFullYear().toString();
+
 const EMPTY_FORM = {
   kriterTipi: "" as KriterTipi | "",
   ustKriter: "",
   kriterAdi: "",
+  donem: CURRENT_YEAR,
   aktif: true,
   agirlikPuani: 0,
 };
