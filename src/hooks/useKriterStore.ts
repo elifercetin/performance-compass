@@ -1,26 +1,15 @@
 import { useState, useCallback } from "react";
-import { Kriter, KriterTipi, KRITER_TIPLERI, VARSAYILAN_KRITERLER } from "@/types/kriter";
+import { Kriter, VARSAYILAN_KRITERLER } from "@/types/kriter";
 
-// Generate initial criteria from the 3-level default map
-const INITIAL_KRITERLER: Kriter[] = [];
-let idCounter = 1;
-for (const tip of KRITER_TIPLERI) {
-  const ustKriterler = VARSAYILAN_KRITERLER[tip];
-  for (const [ustKriter, altKriterler] of Object.entries(ustKriterler)) {
-    for (const kriterAdi of altKriterler) {
-      INITIAL_KRITERLER.push({
-        id: String(idCounter++),
-        kriterTipi: tip,
-        ustKriter,
-        kriterAdi,
-        donem: new Date().getFullYear().toString(),
-        aktif: true,
-        kullanimda: false,
-        agirlikPuani: 0,
-      });
-    }
-  }
-}
+const CURRENT_YEAR = new Date().getFullYear().toString();
+
+const INITIAL_KRITERLER: Kriter[] = VARSAYILAN_KRITERLER.map((k, i) => ({
+  ...k,
+  id: String(i + 1),
+  donem: CURRENT_YEAR,
+  kullanimda: false,
+  agirlikPuani: 0,
+}));
 
 export function useKriterStore() {
   const [kriterler, setKriterler] = useState<Kriter[]>(INITIAL_KRITERLER);

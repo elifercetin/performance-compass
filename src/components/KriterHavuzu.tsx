@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { Kriter, KriterTipi, KRITER_TIPLERI, VARSAYILAN_KRITERLER } from "@/types/kriter";
+import { Kriter, Seviye, VARSAYILAN_KRITER_GRUPLARI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -12,8 +13,14 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2, Plus, X, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Search, ChevronDown, ChevronRight, Info, Layers } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 
 interface Props {
@@ -30,47 +37,47 @@ interface Props {
 
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
+const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: "" };
+
 const EMPTY_FORM = {
-  kriterTipi: "" as KriterTipi | "",
-  ustKriter: "",
+  kriterGrubu: "",
+  kriterGrubuCustom: "",
   kriterAdi: "",
   donem: CURRENT_YEAR,
   aktif: true,
   agirlikPuani: 0,
+  seviyeler: [{ ...EMPTY_SEVIYE }] as Seviye[],
 };
 
 export default function KriterHavuzu({
   kriterler, onAdd, onUpdate, onDelete, onToggleAktif, readOnly,
   donem, onDonemChange, donemler,
 }: Props) {
-  const [filterTip, setFilterTip] = useState<string>("Tumu");
+  const [filterGrup, setFilterGrup] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 300);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
+  // All unique groups
+  const allGroups = useMemo(() => {
+    const set = new Set([...VARSAYILAN_KRITER_GRUPLARI, ...kriterler.map(k => k.kriterGrubu)]);
+    return Array.from(set);
+  }, [kriterler]);
+
   const filtered = useMemo(() => {
     return kriterler.filter((k) => {
-      if (filterTip !== "Tumu" && k.kriterTipi !== filterTip) return false;
+      if (filterGrup !== "Tumu" && k.kriterGrubu !== filterGrup) return false;
       if (debouncedSearch) {
         const s = debouncedSearch.toLowerCase();
-        if (
-          !k.kriterAdi.toLowerCase().includes(s) &&
-          !k.ustKriter.toLowerCase().includes(s)
-        ) return false;
+        if (!k.kriterAdi.toLowerCase().includes(s) && !k.kriterGrubu.toLowerCase().includes(s)) return false;
       }
       return true;
     });
-  }, [kriterler, filterTip, debouncedSearch]);
-
-  // Get üst kriter options based on selected kriter tipi
-  const ustKriterOptions = useMemo(() => {
-    if (!form.kriterTipi) return [];
-    const ustMap = VARSAYILAN_KRITERLER[form.kriterTipi as KriterTipi];
-    return ustMap ? Object.keys(ustMap) : [];
-  }, [form.kriterTipi]);
+  }, [kriterler, filterGrup, debouncedSearch]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -81,215 +88,358 @@ export default function KriterHavuzu({
   const openEdit = (k: Kriter) => {
     setEditingId(k.id);
     setForm({
-      kriterTipi: k.kriterTipi,
-      ustKriter: k.ustKriter,
+      kriterGrubu: allGroups.includes(k.kriterGrubu) ? k.kriterGrubu : "__custom__",
+      kriterGrubuCustom: allGroups.includes(k.kriterGrubu) ? "" : k.kriterGrubu,
       kriterAdi: k.kriterAdi,
       donem: k.donem || CURRENT_YEAR,
       aktif: k.aktif,
       agirlikPuani: k.agirlikPuani,
+      seviyeler: k.seviyeler.length > 0 ? [...k.seviyeler] : [{ ...EMPTY_SEVIYE }],
     });
     setDialogOpen(true);
   };
 
+  const resolvedGrup = form.kriterGrubu === "__custom__" ? form.kriterGrubuCustom : form.kriterGrubu;
+
   const handleSave = () => {
-    if (!form.kriterTipi || !form.ustKriter || !form.kriterAdi || !form.donem) return;
+    if (!resolvedGrup || !form.kriterAdi || !form.donem) return;
+    const validSeviyeler = form.seviyeler.filter(s => s.tanim.trim());
+    const data = {
+      kriterGrubu: resolvedGrup,
+      kriterAdi: form.kriterAdi,
+      donem: form.donem,
+      aktif: form.aktif,
+      agirlikPuani: form.agirlikPuani,
+      seviyeler: validSeviyeler,
+    };
     if (editingId) {
-      onUpdate(editingId, form as Partial<Kriter>);
+      onUpdate(editingId, data);
     } else {
-      onAdd(form as Omit<Kriter, "id" | "kullanimda">);
+      onAdd(data);
     }
     setDialogOpen(false);
   };
 
+  const addSeviye = () => {
+    const nextNo = form.seviyeler.length + 1;
+    if (nextNo > 4) return;
+    setForm({
+      ...form,
+      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: "" }],
+    });
+  };
+
+  const removeSeviye = (index: number) => {
+    const updated = form.seviyeler.filter((_, i) => i !== index).map((s, i) => ({ ...s, seviyeNo: i + 1 }));
+    setForm({ ...form, seviyeler: updated });
+  };
+
+  const updateSeviye = (index: number, field: keyof Seviye, value: string | number) => {
+    const updated = form.seviyeler.map((s, i) => i === index ? { ...s, [field]: value } : s);
+    setForm({ ...form, seviyeler: updated });
+  };
+
   const clearFilters = () => {
-    setFilterTip("Tumu");
+    setFilterGrup("Tumu");
     setSearchText("");
   };
 
+  const isFormValid = !!resolvedGrup && !!form.kriterAdi && !!form.donem && form.seviyeler.some(s => s.tanim.trim());
+
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Kriter Tipi</Label>
-          <Select value={filterTip} onValueChange={setFilterTip}>
-            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Tumu">Tümü</SelectItem>
-              {KRITER_TIPLERI.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Kriter Adı</Label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Kriter adı ara..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-[250px] pl-8"
-            />
+    <TooltipProvider>
+      <div className="space-y-4">
+        {/* Filters */}
+        <div className="flex flex-wrap items-end gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Dönem</Label>
+            <Select value={donem} onValueChange={onDonemChange}>
+              <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {donemler.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Kriter Grubu</Label>
+            <Select value={filterGrup} onValueChange={setFilterGrup}>
+              <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Tumu">Tümü</SelectItem>
+                {allGroups.map((g) => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Kriter Adı</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Kriter adı ara..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-[220px] pl-8"
+              />
+            </div>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              <X className="mr-1 h-3.5 w-3.5" /> Temizle
+            </Button>
+            {!readOnly && (
+              <Button onClick={openAdd} size="sm" className="shadow-sm">
+                <Plus className="mr-1 h-3.5 w-3.5" /> Yeni Kriter
+              </Button>
+            )}
           </div>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Dönem</Label>
-          <Select value={donem} onValueChange={onDonemChange}>
-            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {donemler.map((d) => (
-                <SelectItem key={d} value={d}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" onClick={clearFilters}>
-            <X className="mr-1 h-4 w-4" /> Temizle
-          </Button>
-          {!readOnly && (
-            <Button onClick={openAdd}>
-              <Plus className="mr-1 h-4 w-4" /> Yeni Kriter
-            </Button>
-          )}
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="rounded-lg border border-border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Kriter Tipi</TableHead>
-              <TableHead>Üst Kriter Adı</TableHead>
-              <TableHead>Kriter Adı</TableHead>
-              <TableHead className="text-center">Performans Atama Durumu</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  Kayıt bulunamadı
-                </TableCell>
+        {/* Table */}
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-8"></TableHead>
+                <TableHead>Kriter Grubu</TableHead>
+                <TableHead>Kriter Adı</TableHead>
+                <TableHead className="text-center">Seviye Sayısı</TableHead>
+                <TableHead className="text-center">Durum</TableHead>
+                <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
-            ) : (
-              filtered.map((k) => (
-                <TableRow key={k.id}>
-                  <TableCell>{k.kriterTipi}</TableCell>
-                  <TableCell>{k.ustKriter}</TableCell>
-                  <TableCell className="font-medium">{k.kriterAdi}</TableCell>
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={k.aktif}
-                      onCheckedChange={() => onToggleAktif(k.id)}
-                      disabled={readOnly}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      {!readOnly && (
-                        <>
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(k)}>
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                          {k.kullanimda ? (
-                            <Button variant="ghost" size="icon" disabled title="Kullanımda olan kriter silinemez">
-                              <Trash2 className="h-4 w-4 text-muted-foreground/40" />
-                            </Button>
-                          ) : (
-                            <Button variant="ghost" size="icon" onClick={() => onDelete(k.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
-                        </>
-                      )}
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                    <div className="flex flex-col items-center gap-2">
+                      <Layers className="h-8 w-8 text-muted-foreground/40" />
+                      <span>Kayıt bulunamadı</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
-          Toplam {filtered.length} kayıt listeleniyor
-        </div>
-      </div>
-
-      {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Kriter Düzenle" : "Yeni Kriter Ekle"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label>Kriter Tipi *</Label>
-              <Select
-                value={form.kriterTipi}
-                onValueChange={(v) => setForm({ ...form, kriterTipi: v as KriterTipi, ustKriter: "" })}
-              >
-                <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
-                <SelectContent>
-                  {KRITER_TIPLERI.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Üst Kriter *</Label>
-              <Select
-                value={form.ustKriter}
-                onValueChange={(v) => setForm({ ...form, ustKriter: v })}
-                disabled={!form.kriterTipi}
-              >
-                <SelectTrigger><SelectValue placeholder="Önce kriter tipi seçiniz" /></SelectTrigger>
-                <SelectContent>
-                  {ustKriterOptions.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Kriter Adı *</Label>
-              <Input
-                value={form.kriterAdi}
-                onChange={(e) => setForm({ ...form, kriterAdi: e.target.value })}
-                maxLength={300}
-                placeholder="Kriterin detaylı açıklaması"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Dönem *</Label>
-              <Select
-                value={form.donem}
-                onValueChange={(v) => setForm({ ...form, donem: v })}
-              >
-                <SelectTrigger><SelectValue placeholder="Dönem seçiniz" /></SelectTrigger>
-                <SelectContent>
-                  {donemler.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              ) : (
+                filtered.map((k) => (
+                  <Collapsible key={k.id} open={expandedId === k.id} onOpenChange={(open) => setExpandedId(open ? k.id : null)} asChild>
+                    <>
+                      <TableRow className="group hover:bg-muted/30 transition-colors">
+                        <TableCell className="w-8 px-2">
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              {expandedId === k.id ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+                              )}
+                            </Button>
+                          </CollapsibleTrigger>
+                        </TableCell>
+                        <TableCell className="text-sm">{k.kriterGrubu}</TableCell>
+                        <TableCell className="font-medium text-sm">{k.kriterAdi}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="text-xs font-normal">
+                            {k.seviyeler.length} Seviye
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            className={`text-xs cursor-pointer transition-colors ${
+                              k.aktif
+                                ? "bg-success/15 text-success hover:bg-success/25 border-success/20"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                            variant="outline"
+                            onClick={() => !readOnly && onToggleAktif(k.id)}
+                          >
+                            {k.aktif ? "Aktif" : "Pasif"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!readOnly && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
+                                  <Pencil className="h-3.5 w-3.5 text-primary" />
+                                </Button>
+                                {!k.kullanimda && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(k.id)}>
+                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <CollapsibleContent asChild>
+                        <tr>
+                          <td colSpan={6} className="p-0">
+                            <div className="bg-muted/20 border-t border-border px-8 py-4 animate-fade-in">
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {k.seviyeler
+                                  .sort((a, b) => a.seviyeNo - b.seviyeNo)
+                                  .map((s) => (
+                                    <div key={s.seviyeNo} className="rounded-lg border border-border bg-card p-3 shadow-sm hover:shadow-md transition-shadow">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-primary-foreground ${
+                                          s.seviyeNo === 1 ? "bg-destructive" :
+                                          s.seviyeNo === 2 ? "bg-warning" :
+                                          s.seviyeNo === 3 ? "bg-primary" :
+                                          "bg-success"
+                                        }`}>
+                                          {s.seviyeNo}
+                                        </span>
+                                        <span className="font-medium text-sm">{s.tanim}</span>
+                                      </div>
+                                      {s.davranisGostergeleri && (
+                                        <div className="flex items-start gap-1.5">
+                                          <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                                          <p className="text-xs text-muted-foreground leading-relaxed">{s.davranisGostergeleri}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30">
+            Toplam {filtered.length} kayıt listeleniyor
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
-            <Button
-              onClick={handleSave}
-              disabled={!form.kriterTipi || !form.ustKriter || !form.kriterAdi || !form.donem}
-            >
-              Kaydet
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+
+        {/* Add/Edit Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-lg">{editingId ? "Kriter Düzenle" : "Yeni Kriter Ekle"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+              {/* Kriter Grubu */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Kriter Grubu <span className="text-destructive">*</span></Label>
+                <Select
+                  value={form.kriterGrubu}
+                  onValueChange={(v) => setForm({ ...form, kriterGrubu: v, kriterGrubuCustom: "" })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Kriter grubu seçiniz" /></SelectTrigger>
+                  <SelectContent>
+                    {allGroups.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                    <SelectItem value="__custom__">+ Yeni Grup Ekle</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.kriterGrubu === "__custom__" && (
+                  <Input
+                    placeholder="Yeni kriter grubu adı"
+                    value={form.kriterGrubuCustom}
+                    onChange={(e) => setForm({ ...form, kriterGrubuCustom: e.target.value })}
+                    className="mt-2"
+                  />
+                )}
+              </div>
+
+              {/* Kriter Adı */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Kriter Adı <span className="text-destructive">*</span></Label>
+                <Input
+                  value={form.kriterAdi}
+                  onChange={(e) => setForm({ ...form, kriterAdi: e.target.value })}
+                  placeholder="Kriterin adı"
+                />
+              </div>
+
+              {/* Dönem */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Dönem <span className="text-destructive">*</span></Label>
+                <Select value={form.donem} onValueChange={(v) => setForm({ ...form, donem: v })}>
+                  <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {donemler.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Seviyeler */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Seviyeler <span className="text-destructive">*</span></Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addSeviye}
+                    disabled={form.seviyeler.length >= 4}
+                    className="text-xs"
+                  >
+                    <Plus className="mr-1 h-3 w-3" /> Seviye Ekle
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {form.seviyeler.map((s, i) => (
+                    <div key={i} className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={String(s.seviyeNo)}
+                            onValueChange={(v) => updateSeviye(i, "seviyeNo", parseInt(v))}
+                          >
+                            <SelectTrigger className="w-[100px] h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4].map((n) => (
+                                <SelectItem key={n} value={String(n)}>Seviye {n}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            placeholder="Seviye tanımı (ör: Yeterli)"
+                            value={s.tanim}
+                            onChange={(e) => updateSeviye(i, "tanim", e.target.value)}
+                            className="h-8 text-sm flex-1"
+                          />
+                        </div>
+                        {form.seviyeler.length > 1 && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 ml-2" onClick={() => removeSeviye(i)}>
+                            <X className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                      <Textarea
+                        placeholder="Davranış göstergeleri (her satıra bir gösterge yazabilirsiniz)"
+                        value={s.davranisGostergeleri}
+                        onChange={(e) => updateSeviye(i, "davranisGostergeleri", e.target.value)}
+                        className="min-h-[60px] text-sm"
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
+              <Button onClick={handleSave} disabled={!isFormValid} className="shadow-sm">
+                Kaydet
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }
