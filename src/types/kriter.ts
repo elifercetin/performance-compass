@@ -8,99 +8,120 @@ export const KRITER_TIPLERI = [
 
 export type KriterTipi = (typeof KRITER_TIPLERI)[number];
 
+export interface Seviye {
+  seviyeNo: number; // 1-4
+  tanim: string;
+  davranisGostergeleri: string;
+}
+
 export interface Kriter {
   id: string;
-  kriterTipi: KriterTipi;
-  ustKriter: string;
+  kriterGrubu: string; // was kriterTipi
   kriterAdi: string;
+  seviyeler: Seviye[];
   donem: string;
   aktif: boolean;
   kullanimda: boolean;
   agirlikPuani: number;
 }
 
-/** 3-level structure: Kriter Tipi → Üst Kriter → Kriter Adı (detay) */
-export const VARSAYILAN_KRITERLER: Record<KriterTipi, Record<string, string[]>> = {
-  "İş Güvenliği ve Kurallara Uyum": {
-    "KKD Kullanımı": [
-      "Görevine uygun kask, eldiven, gözlük, kulaklık gibi kişisel koruyucu ekipmanları eksiksiz ve düzenli olarak kullanmak",
-      "KKD'lerin bakım ve kontrolünü zamanında yapmak",
-    ],
-    "İş Güvenliği Prosedürlerine Uyum": [
-      "Çalışma alanındaki güvenlik talimatlarına ve prosedürlerine uymak",
-      "Tehlikeli durum ve davranışları raporlamak",
-    ],
-    "Kaza ve Olay Geçmişi": [
-      "Dönem içinde iş kazası veya ramak kala olay kaydının bulunmaması",
-      "Geçmiş olaylardan ders çıkararak önlem almak",
-    ],
-    "İSG Farkındalık Düzeyi": [
-      "İSG eğitimlerine düzenli katılım sağlamak",
-      "Çalışma arkadaşlarını güvenlik konusunda uyarmak ve bilinçlendirmek",
-    ],
-  },
-  "Teknik Bilgi ve Beceri": {
-    "Makine/Ekipman Kullanma Becerisi": [
-      "Sorumlu olduğu makine ve ekipmanları doğru ve verimli şekilde kullanmak",
-      "Arıza durumlarında ilk müdahaleyi yapabilmek",
-    ],
-    "Yeni Beceriler Öğrenme İsteği": [
-      "Yeni teknoloji ve yöntemlere açık olmak ve öğrenme çabası göstermek",
-      "Eğitim ve gelişim fırsatlarına aktif katılım sağlamak",
-    ],
-    "Sertifikasyon/Donanım Düzeyi": [
-      "Göreviyle ilgili gerekli sertifika ve belgelere sahip olmak",
-      "Sertifikaların geçerlilik sürelerini takip etmek ve yenilemek",
-    ],
-    "Mevzuat ve Standart Bilgisi": [
-      "İlgili yasal mevzuat ve kalite standartlarını bilmek",
-      "Güncel mevzuat değişikliklerini takip etmek",
+/** Default kriter grupları */
+export const VARSAYILAN_KRITER_GRUPLARI = [
+  "İş Güvenliği ve Kurallara Uyum",
+  "Teknik Bilgi ve Beceri",
+  "İş Performansı",
+  "İş Disiplini",
+  "Davranışsal Kriterler",
+];
+
+/** Default criteria with levels */
+export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agirlikPuani" | "donem">> = [
+  {
+    kriterGrubu: "İş Güvenliği ve Kurallara Uyum",
+    kriterAdi: "KKD Kullanımı",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "KKD'leri hiç kullanmıyor veya sık sık eksik kullanıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "KKD'leri zaman zaman eksik kullanıyor, uyarı gerektiriyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "KKD'leri düzenli kullanıyor, bakım ve kontrolünü yapıyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "KKD kullanımında örnek oluyor, diğer çalışanları da yönlendiriyor" },
     ],
   },
-  "İş Performansı": {
-    "İş Planına Uyum": [
-      "Verilen görevleri planlanan süre içinde tamamlamak",
-      "İş programına ve önceliklendirmeye uymak",
-    ],
-    "İşin Kalite Kriterlerine Uyumu": [
-      "Üretilen iş veya hizmetin kalite standartlarına uygun olması",
-      "Kalite kontrol süreçlerine aktif katılım sağlamak",
-    ],
-    "Hata Oranı": [
-      "İş süreçlerinde hata oranını minimum düzeyde tutmak",
-      "Yapılan hataları tekrarlamamak ve düzeltici aksiyon almak",
-    ],
-    "Verimlilik Düzeyi": [
-      "Kaynakları etkin ve verimli kullanmak",
-      "Birim zamanda beklenen üretim/hizmet miktarını karşılamak",
+  {
+    kriterGrubu: "İş Güvenliği ve Kurallara Uyum",
+    kriterAdi: "İş Güvenliği Prosedürlerine Uyum",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Güvenlik talimatlarına uymuyor, tehlikeli davranışlar sergiliyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Prosedürlere kısmen uyuyor, zaman zaman ihlal yapıyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Prosedürlere uyuyor, tehlikeli durumları raporluyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Proaktif olarak riskleri tespit ediyor ve önlem alıyor" },
     ],
   },
-  "İş Disiplini": {
-    "İşe Devam/Devamsızlık Düzeyi": [
-      "Mazeret dışı devamsızlık yapmamak",
-      "İzin kullanımlarını planlı ve düzenli yapmak",
-    ],
-    "İşe Zamanında Gelme ve İş Saatlerine Uyum": [
-      "Vardiya ve mesai saatlerine uygun şekilde işbaşı yapmak",
-      "Mola sürelerine uymak ve iş saatlerini etkin kullanmak",
-    ],
-    "Kurum Değerlerine Uyum": [
-      "Kurum kültürü ve değerlerine uygun davranış sergilemek",
-      "İş yeri kurallarına ve etik ilkelere uymak",
+  {
+    kriterGrubu: "Teknik Bilgi ve Beceri",
+    kriterAdi: "Makine/Ekipman Kullanma Becerisi",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Makine ve ekipmanları doğru kullanamıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Temel düzeyde kullanıyor, yardım gerektiriyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Doğru ve verimli kullanıyor, arıza müdahalesi yapabiliyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Ekipmanları ustaca kullanıyor, diğerlerini eğitebiliyor" },
     ],
   },
-  "Davranışsal Kriterler": {
-    "Aktif Dinleme ve İletişim": [
-      "İş arkadaşları ve yöneticileriyle etkili iletişim kurmak",
-      "Geri bildirimlere açık olmak ve yapıcı iletişim sağlamak",
-    ],
-    "Dayanıklılık, Esneklik ve Çeviklik": [
-      "Değişen iş koşullarına hızlı uyum sağlamak",
-      "Stresli durumlarda soğukkanlılığını korumak ve çözüm odaklı olmak",
-    ],
-    "Çevre Bilinci": [
-      "Çevre koruma kurallarına uymak ve atık yönetimini doğru uygulamak",
-      "Enerji ve kaynak tasarrufuna dikkat etmek",
+  {
+    kriterGrubu: "Teknik Bilgi ve Beceri",
+    kriterAdi: "Yeni Beceriler Öğrenme İsteği",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Yeni teknoloji ve yöntemlere kapalı" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Zorlandığında öğrenmeye çalışıyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Aktif olarak eğitimlere katılıyor ve öğreniyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Kendi kendine öğreniyor ve öğrendiklerini paylaşıyor" },
     ],
   },
-};
+  {
+    kriterGrubu: "İş Performansı",
+    kriterAdi: "İş Planına Uyum",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Görevleri zamanında tamamlamıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Genellikle gecikiyor, planlama desteği gerekiyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Plana uygun çalışıyor, görevlerini zamanında tamamlıyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Planın önünde gidiyor, ekibe yardımcı oluyor" },
+    ],
+  },
+  {
+    kriterGrubu: "İş Performansı",
+    kriterAdi: "İşin Kalite Kriterlerine Uyumu",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Kalite standartlarını karşılayamıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Kalite seviyesi dalgalanıyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Standartlara uygun iş çıkarıyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Kaliteyi sürekli artırıyor, iyileştirme önerileri sunuyor" },
+    ],
+  },
+  {
+    kriterGrubu: "İş Disiplini",
+    kriterAdi: "İşe Devam/Devamsızlık Düzeyi",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Sık devamsızlık yapıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Zaman zaman mazeret dışı devamsızlık yapıyor" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Düzenli devam ediyor" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Tam devam, izin planlamasını mükemmel yapıyor" },
+    ],
+  },
+  {
+    kriterGrubu: "Davranışsal Kriterler",
+    kriterAdi: "Aktif Dinleme ve İletişim",
+    aktif: true,
+    seviyeler: [
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "İletişim kurmakta zorlanıyor" },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Temel iletişim kurabiliyor ancak geri bildirime kapalı" },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Etkili iletişim kuruyor, geri bildirimlere açık" },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Mükemmel iletişim, çatışma çözümünde liderlik yapıyor" },
+    ],
+  },
+];

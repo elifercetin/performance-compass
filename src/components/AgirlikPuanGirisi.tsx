@@ -1,16 +1,17 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Kriter, KRITER_TIPLERI } from "@/types/kriter";
+import { Kriter, VARSAYILAN_KRITER_GRUPLARI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Save, AlertTriangle } from "lucide-react";
+import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -48,30 +49,12 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
     [localKriterler]
   );
 
-  const grouped = useMemo(() => {
-    const result: Record<string, Kriter[]> = {};
-    for (const tip of KRITER_TIPLERI) result[tip] = [];
-    for (const k of aktifKriterler) {
-      if (!result[k.kriterTipi]) result[k.kriterTipi] = [];
-      result[k.kriterTipi].push(k);
-    }
-    return result;
-  }, [aktifKriterler]);
-
-  const tipTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    for (const tip of KRITER_TIPLERI) {
-      totals[tip] = aktifKriterler
-        .filter((k) => k.kriterTipi === tip)
-        .reduce((sum, k) => sum + k.agirlikPuani, 0);
-    }
-    return totals;
-  }, [aktifKriterler]);
-
-  const genelToplam = useMemo(
-    () => Object.values(tipTotals).reduce((a, b) => a + b, 0),
-    [tipTotals]
+  const toplam = useMemo(
+    () => aktifKriterler.reduce((sum, k) => sum + k.agirlikPuani, 0),
+    [aktifKriterler]
   );
+
+  const isComplete = toplam === 100;
 
   const handleWeightChange = useCallback((id: string, value: string) => {
     const num = Math.min(100, Math.max(0, parseInt(value) || 0));
@@ -88,13 +71,13 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
 
   return (
     <div className="space-y-4">
-      {/* Summary bar */}
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+      {/* Top bar with period + total */}
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <Label className="text-sm text-muted-foreground">Dönem:</Label>
             <Select value={donem} onValueChange={onDonemChange}>
-              <SelectTrigger className="w-[100px] h-8">
+              <SelectTrigger className="w-[110px] h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -104,64 +87,68 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
               </SelectContent>
             </Select>
           </div>
-          <div className="h-6 w-px bg-border" />
-          <span className="text-sm font-medium">Genel Toplam:</span>
-          <Badge
-            variant={genelToplam === 100 ? "default" : "destructive"}
-            className="text-sm px-3 py-1"
-          >
-            %{genelToplam}
-          </Badge>
-          {genelToplam !== 100 && (
-            <span className="flex items-center gap-1 text-sm text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-              Tüm kriter tiplerinin toplamı %100 olmalıdır
-            </span>
-          )}
+
+          <div className="flex items-center gap-4 flex-1 sm:justify-end w-full sm:w-auto">
+            <div className="flex items-center gap-3 flex-1 sm:flex-initial sm:min-w-[300px]">
+              <span className="text-sm font-medium whitespace-nowrap">Toplam:</span>
+              <div className="flex-1 relative">
+                <Progress
+                  value={Math.min(toplam, 100)}
+                  className={`h-3 ${isComplete ? "[&>div]:bg-success" : "[&>div]:bg-destructive"}`}
+                />
+              </div>
+              <Badge
+                variant="outline"
+                className={`text-sm font-bold px-3 py-1 min-w-[56px] justify-center transition-colors ${
+                  isComplete
+                    ? "border-success/30 bg-success/10 text-success"
+                    : "border-destructive/30 bg-destructive/10 text-destructive"
+                }`}
+              >
+                %{toplam}
+              </Badge>
+            </div>
+
+            {!isComplete && (
+              <span className="hidden sm:flex items-center gap-1.5 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                Toplam %100 olmalıdır
+              </span>
+            )}
+            {isComplete && (
+              <span className="hidden sm:flex items-center gap-1.5 text-sm text-success">
+                <CheckCircle2 className="h-4 w-4" />
+                Tamamlandı
+              </span>
+            )}
+          </div>
         </div>
-        {!readOnly && (
-          <Button onClick={handleSave} disabled={!isDirty}>
-            <Save className="mr-1 h-4 w-4" /> Değişiklikleri Kaydet
-          </Button>
-        )}
       </div>
 
-      {/* Accordion: Tip → Kriterler */}
-      <Accordion type="multiple" defaultValue={KRITER_TIPLERI.map(String)} className="space-y-2">
-        {KRITER_TIPLERI.map((tip) => {
-          const items = grouped[tip] || [];
-          if (items.length === 0) return null;
-          const tipTotal = tipTotals[tip] || 0;
-
-          return (
-            <AccordionItem
-              key={tip}
-              value={tip}
-              className="rounded-lg border border-border bg-card overflow-hidden"
-            >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <div className="flex items-center gap-3 w-full">
-                  <span className="font-semibold text-foreground">{tip}</span>
-                  <Badge
-                    variant={tipTotal > 0 ? "secondary" : "outline"}
-                    className="ml-auto mr-4"
-                  >
-                    %{tipTotal}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-0 pb-0">
-                {items.map((k) => (
-                  <div
-                    key={k.id}
-                    className="flex items-center justify-between border-t border-border/50 px-6 py-2.5"
-                  >
-                    <div className="text-sm">
-                      <span className="font-medium text-muted-foreground">{k.ustKriter}</span>
-                      <span className="mx-1.5 text-muted-foreground/50">›</span>
-                      <span>{k.kriterAdi}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead>Kriter Grubu</TableHead>
+              <TableHead>Kriter Adı</TableHead>
+              <TableHead className="text-center w-[140px]">Ağırlık (%)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {aktifKriterler.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-12">
+                  Aktif kriter bulunamadı
+                </TableCell>
+              </TableRow>
+            ) : (
+              aktifKriterler.map((k) => (
+                <TableRow key={k.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="text-sm text-muted-foreground">{k.kriterGrubu}</TableCell>
+                  <TableCell className="font-medium text-sm">{k.kriterAdi}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <span className="text-xs text-muted-foreground">%</span>
                       <Input
                         type="number"
@@ -169,17 +156,34 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
                         max={100}
                         value={k.agirlikPuani}
                         onChange={(e) => handleWeightChange(k.id, e.target.value)}
-                        className="w-[70px] text-center h-8"
+                        className="w-[72px] text-center h-9"
                         disabled={readOnly}
                       />
                     </div>
-                  </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+        <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30 flex justify-between">
+          <span>Toplam {aktifKriterler.length} aktif kriter</span>
+        </div>
+      </div>
+
+      {/* Save button */}
+      {!readOnly && (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || !isComplete}
+            size="lg"
+            className="shadow-sm"
+          >
+            <Save className="mr-2 h-4 w-4" /> Değişiklikleri Kaydet
+          </Button>
+        </div>
+      )}
 
       <AlertDialog open={showLeaveWarning} onOpenChange={setShowLeaveWarning}>
         <AlertDialogContent>
