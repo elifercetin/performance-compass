@@ -3,7 +3,7 @@ import { Kriter, Seviye, VARSAYILAN_KRITER_GRUPLARI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -34,7 +34,7 @@ interface Props {
 
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
-const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: "" };
+const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: [] };
 
 const EMPTY_FORM = {
   kriterGrubu: "",
@@ -122,7 +122,7 @@ export default function KriterHavuzu({
     if (nextNo > 4) return;
     setForm({
       ...form,
-      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: "" }],
+      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: [] }],
     });
   };
 
@@ -131,8 +131,27 @@ export default function KriterHavuzu({
     setForm({ ...form, seviyeler: updated });
   };
 
-  const updateSeviye = (index: number, field: keyof Seviye, value: string | number) => {
+  const updateSeviye = (index: number, field: keyof Seviye, value: string | number | string[]) => {
     const updated = form.seviyeler.map((s, i) => i === index ? { ...s, [field]: value } : s);
+    setForm({ ...form, seviyeler: updated });
+  };
+
+  const [newGosterge, setNewGosterge] = useState<Record<number, string>>({});
+
+  const addGosterge = (seviyeIndex: number) => {
+    const text = (newGosterge[seviyeIndex] || "").trim();
+    if (!text) return;
+    const updated = form.seviyeler.map((s, i) =>
+      i === seviyeIndex ? { ...s, davranisGostergeleri: [...s.davranisGostergeleri, text] } : s
+    );
+    setForm({ ...form, seviyeler: updated });
+    setNewGosterge({ ...newGosterge, [seviyeIndex]: "" });
+  };
+
+  const removeGosterge = (seviyeIndex: number, gostergeIndex: number) => {
+    const updated = form.seviyeler.map((s, i) =>
+      i === seviyeIndex ? { ...s, davranisGostergeleri: s.davranisGostergeleri.filter((_, gi) => gi !== gostergeIndex) } : s
+    );
     setForm({ ...form, seviyeler: updated });
   };
 
@@ -291,13 +310,17 @@ export default function KriterHavuzu({
                       <TableCell className="text-sm">
                         <div>
                           <span className="font-medium">{s.tanim}</span>
-                          {s.davranisGostergeleri && (
+                          {s.davranisGostergeleri.length > 0 && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="inline-block ml-1.5 h-3.5 w-3.5 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="right" className="max-w-xs">
-                                <p className="text-xs whitespace-pre-line">{s.davranisGostergeleri}</p>
+                                <ul className="text-xs space-y-0.5">
+                                  {s.davranisGostergeleri.map((g, gi) => (
+                                    <li key={gi}>• {g}</li>
+                                  ))}
+                                </ul>
                               </TooltipContent>
                             </Tooltip>
                           )}
@@ -448,13 +471,31 @@ export default function KriterHavuzu({
                           </Button>
                         )}
                       </div>
-                      <Textarea
-                        placeholder="Davranış göstergeleri (her satıra bir gösterge yazabilirsiniz)"
-                        value={s.davranisGostergeleri}
-                        onChange={(e) => updateSeviye(i, "davranisGostergeleri", e.target.value)}
-                        className="min-h-[60px] text-sm"
-                        rows={2}
-                      />
+                      {/* Davranış Göstergeleri */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Davranış Göstergeleri</Label>
+                        {s.davranisGostergeleri.map((g, gi) => (
+                          <div key={gi} className="flex items-center gap-1.5 pl-2">
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-sm flex-1">{g}</span>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeGosterge(i, gi)}>
+                              <X className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Davranış göstergesi ekle..."
+                            value={newGosterge[i] || ""}
+                            onChange={(e) => setNewGosterge({ ...newGosterge, [i]: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGosterge(i); } }}
+                            className="h-8 text-sm flex-1"
+                          />
+                          <Button type="button" variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={() => addGosterge(i)}>
+                            <Plus className="mr-1 h-3 w-3" /> Ekle
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

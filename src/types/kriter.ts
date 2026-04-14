@@ -11,7 +11,7 @@ export type KriterTipi = (typeof KRITER_TIPLERI)[number];
 export interface Seviye {
   seviyeNo: number; // 1-4
   tanim: string;
-  davranisGostergeleri: string;
+  davranisGostergeleri: string[];
 }
 
 export interface Kriter {
@@ -41,10 +41,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "KKD Kullanımı",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "KKD'leri hiç kullanmıyor veya sık sık eksik kullanıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "KKD'leri zaman zaman eksik kullanıyor, uyarı gerektiriyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "KKD'leri düzenli kullanıyor, bakım ve kontrolünü yapıyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "KKD kullanımında örnek oluyor, diğer çalışanları da yönlendiriyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["KKD'leri hiç kullanmıyor veya sık sık eksik kullanıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["KKD'leri zaman zaman eksik kullanıyor", "Uyarı gerektiriyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["KKD'leri düzenli kullanıyor", "Bakım ve kontrolünü yapıyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["KKD kullanımında örnek oluyor", "Diğer çalışanları da yönlendiriyor"] },
     ],
   },
   {
@@ -52,10 +52,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "İş Güvenliği Prosedürlerine Uyum",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Güvenlik talimatlarına uymuyor, tehlikeli davranışlar sergiliyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Prosedürlere kısmen uyuyor, zaman zaman ihlal yapıyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Prosedürlere uyuyor, tehlikeli durumları raporluyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Proaktif olarak riskleri tespit ediyor ve önlem alıyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Güvenlik talimatlarına uymuyor", "Tehlikeli davranışlar sergiliyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Prosedürlere kısmen uyuyor", "Zaman zaman ihlal yapıyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Prosedürlere uyuyor", "Tehlikeli durumları raporluyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Proaktif olarak riskleri tespit ediyor", "Önlem alıyor"] },
     ],
   },
   {
@@ -63,10 +63,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "Makine/Ekipman Kullanma Becerisi",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Makine ve ekipmanları doğru kullanamıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Temel düzeyde kullanıyor, yardım gerektiriyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Doğru ve verimli kullanıyor, arıza müdahalesi yapabiliyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Ekipmanları ustaca kullanıyor, diğerlerini eğitebiliyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Makine ve ekipmanları doğru kullanamıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Temel düzeyde kullanıyor", "Yardım gerektiriyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Doğru ve verimli kullanıyor", "Arıza müdahalesi yapabiliyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Ekipmanları ustaca kullanıyor", "Diğerlerini eğitebiliyor"] },
     ],
   },
   {
@@ -74,10 +74,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "Yeni Beceriler Öğrenme İsteği",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Yeni teknoloji ve yöntemlere kapalı" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Zorlandığında öğrenmeye çalışıyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Aktif olarak eğitimlere katılıyor ve öğreniyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Kendi kendine öğreniyor ve öğrendiklerini paylaşıyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Yeni teknoloji ve yöntemlere kapalı"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Zorlandığında öğrenmeye çalışıyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Aktif olarak eğitimlere katılıyor", "Öğreniyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Kendi kendine öğreniyor", "Öğrendiklerini paylaşıyor"] },
     ],
   },
   {
@@ -85,10 +85,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "İş Planına Uyum",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Görevleri zamanında tamamlamıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Genellikle gecikiyor, planlama desteği gerekiyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Plana uygun çalışıyor, görevlerini zamanında tamamlıyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Planın önünde gidiyor, ekibe yardımcı oluyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Görevleri zamanında tamamlamıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Genellikle gecikiyor", "Planlama desteği gerekiyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Plana uygun çalışıyor", "Görevlerini zamanında tamamlıyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Planın önünde gidiyor", "Ekibe yardımcı oluyor"] },
     ],
   },
   {
@@ -96,10 +96,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "İşin Kalite Kriterlerine Uyumu",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Kalite standartlarını karşılayamıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Kalite seviyesi dalgalanıyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Standartlara uygun iş çıkarıyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Kaliteyi sürekli artırıyor, iyileştirme önerileri sunuyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Kalite standartlarını karşılayamıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Kalite seviyesi dalgalanıyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Standartlara uygun iş çıkarıyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Kaliteyi sürekli artırıyor", "İyileştirme önerileri sunuyor"] },
     ],
   },
   {
@@ -107,10 +107,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "İşe Devam/Devamsızlık Düzeyi",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "Sık devamsızlık yapıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Zaman zaman mazeret dışı devamsızlık yapıyor" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Düzenli devam ediyor" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Tam devam, izin planlamasını mükemmel yapıyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["Sık devamsızlık yapıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Zaman zaman mazeret dışı devamsızlık yapıyor"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Düzenli devam ediyor"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Tam devam", "İzin planlamasını mükemmel yapıyor"] },
     ],
   },
   {
@@ -118,10 +118,10 @@ export const VARSAYILAN_KRITERLER: Array<Omit<Kriter, "id" | "kullanimda" | "agi
     kriterAdi: "Aktif Dinleme ve İletişim",
     aktif: true,
     seviyeler: [
-      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: "İletişim kurmakta zorlanıyor" },
-      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: "Temel iletişim kurabiliyor ancak geri bildirime kapalı" },
-      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: "Etkili iletişim kuruyor, geri bildirimlere açık" },
-      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: "Mükemmel iletişim, çatışma çözümünde liderlik yapıyor" },
+      { seviyeNo: 1, tanim: "Yetersiz", davranisGostergeleri: ["İletişim kurmakta zorlanıyor"] },
+      { seviyeNo: 2, tanim: "Geliştirilmeli", davranisGostergeleri: ["Temel iletişim kurabiliyor", "Geri bildirime kapalı"] },
+      { seviyeNo: 3, tanim: "Yeterli", davranisGostergeleri: ["Etkili iletişim kuruyor", "Geri bildirimlere açık"] },
+      { seviyeNo: 4, tanim: "Örnek Düzey", davranisGostergeleri: ["Mükemmel iletişim", "Çatışma çözümünde liderlik yapıyor"] },
     ],
   },
 ];
