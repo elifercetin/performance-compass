@@ -17,7 +17,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2, Plus, X, Search, ChevronDown, ChevronRight, Info, Layers } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Search, Info, Layers } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 
 interface Props {
