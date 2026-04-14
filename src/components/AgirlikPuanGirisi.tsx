@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Kriter, VARSAYILAN_KRITER_GRUPLARI } from "@/types/kriter";
+import { Kriter } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,15 +7,15 @@ import { Progress } from "@/components/ui/progress";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Save, AlertTriangle, CheckCircle2, ChevronDown } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Props {
   kriterler: Kriter[];
@@ -24,6 +24,12 @@ interface Props {
   donem: string;
   onDonemChange: (d: string) => void;
   donemler: string[];
+}
+
+interface GrupData {
+  grupAdi: string;
+  kriterler: Kriter[];
+  toplam: number;
 }
 
 export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave, readOnly, donem, onDonemChange, donemler }: Props) {
@@ -49,12 +55,26 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
     [localKriterler]
   );
 
-  const toplam = useMemo(
-    () => aktifKriterler.reduce((sum, k) => sum + k.agirlikPuani, 0),
-    [aktifKriterler]
+  const gruplar = useMemo<GrupData[]>(() => {
+    const map = new Map<string, Kriter[]>();
+    aktifKriterler.forEach((k) => {
+      const list = map.get(k.kriterGrubu) || [];
+      list.push(k);
+      map.set(k.kriterGrubu, list);
+    });
+    return Array.from(map.entries()).map(([grupAdi, kriterler]) => ({
+      grupAdi,
+      kriterler,
+      toplam: kriterler.reduce((s, k) => s + k.agirlikPuani, 0),
+    }));
+  }, [aktifKriterler]);
+
+  const genelToplam = useMemo(
+    () => gruplar.reduce((s, g) => s + g.toplam, 0),
+    [gruplar]
   );
 
-  const isComplete = toplam === 100;
+  const isComplete = genelToplam === 100;
 
   const handleWeightChange = useCallback((id: string, value: string) => {
     const num = Math.min(100, Math.max(0, parseInt(value) || 0));
@@ -69,9 +89,11 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
     setIsDirty(false);
   };
 
+  const allGroupNames = gruplar.map((g) => g.grupAdi);
+
   return (
     <div className="space-y-4">
-      {/* Top bar with period + total */}
+      {/* Top bar */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -90,10 +112,10 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
 
           <div className="flex items-center gap-4 flex-1 sm:justify-end w-full sm:w-auto">
             <div className="flex items-center gap-3 flex-1 sm:flex-initial sm:min-w-[300px]">
-              <span className="text-sm font-medium whitespace-nowrap">Toplam:</span>
+              <span className="text-sm font-medium whitespace-nowrap">Genel Toplam:</span>
               <div className="flex-1 relative">
                 <Progress
-                  value={Math.min(toplam, 100)}
+                  value={Math.min(genelToplam, 100)}
                   className={`h-3 ${isComplete ? "[&>div]:bg-success" : "[&>div]:bg-destructive"}`}
                 />
               </div>
@@ -105,7 +127,7 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
                     : "border-destructive/30 bg-destructive/10 text-destructive"
                 }`}
               >
-                %{toplam}
+                %{genelToplam}
               </Badge>
             </div>
 
@@ -125,51 +147,62 @@ export default function AgirlikPuanGirisi({ kriterler: initialKriterler, onSave,
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>Kriter Grubu</TableHead>
-              <TableHead>Kriter Adı</TableHead>
-              <TableHead className="text-center w-[140px]">Ağırlık (%)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {aktifKriterler.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground py-12">
-                  Aktif kriter bulunamadı
-                </TableCell>
-              </TableRow>
-            ) : (
-              aktifKriterler.map((k) => (
-                <TableRow key={k.id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="text-sm text-muted-foreground">{k.kriterGrubu}</TableCell>
-                  <TableCell className="font-medium text-sm">{k.kriterAdi}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-xs text-muted-foreground">%</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={k.agirlikPuani}
-                        onChange={(e) => handleWeightChange(k.id, e.target.value)}
-                        className="w-[72px] text-center h-9"
-                        disabled={readOnly}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30 flex justify-between">
-          <span>Toplam {aktifKriterler.length} aktif kriter</span>
+      {/* Grouped accordion */}
+      {gruplar.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm">
+          Aktif kriter bulunamadı
         </div>
-      </div>
+      ) : (
+        <Accordion type="multiple" defaultValue={allGroupNames} className="space-y-3">
+          {gruplar.map((grup) => (
+            <AccordionItem
+              key={grup.grupAdi}
+              value={grup.grupAdi}
+              className="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
+            >
+              <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-muted/30 transition-colors">
+                <div className="flex items-center justify-between w-full pr-2">
+                  <span className="font-semibold text-sm text-foreground">{grup.grupAdi}</span>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs font-bold px-2.5 py-0.5 ${
+                      grup.toplam > 0
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-muted-foreground/20 bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    %{grup.toplam}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-0 pb-0">
+                <div className="divide-y divide-border">
+                  {grup.kriterler.map((k) => (
+                    <div
+                      key={k.id}
+                      className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 transition-colors"
+                    >
+                      <span className="text-sm text-foreground">{k.kriterAdi}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs text-muted-foreground">%</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={k.agirlikPuani}
+                          onChange={(e) => handleWeightChange(k.id, e.target.value)}
+                          className="w-[72px] text-center h-8 text-sm"
+                          disabled={readOnly}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      )}
 
       {/* Save button */}
       {!readOnly && (
