@@ -34,7 +34,7 @@ interface Props {
 
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
-const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: "" };
+const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: [] };
 
 const EMPTY_FORM = {
   kriterGrubu: "",
@@ -122,7 +122,7 @@ export default function KriterHavuzu({
     if (nextNo > 4) return;
     setForm({
       ...form,
-      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: "" }],
+      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: [] }],
     });
   };
 
@@ -131,8 +131,27 @@ export default function KriterHavuzu({
     setForm({ ...form, seviyeler: updated });
   };
 
-  const updateSeviye = (index: number, field: keyof Seviye, value: string | number) => {
+  const updateSeviye = (index: number, field: keyof Seviye, value: string | number | string[]) => {
     const updated = form.seviyeler.map((s, i) => i === index ? { ...s, [field]: value } : s);
+    setForm({ ...form, seviyeler: updated });
+  };
+
+  const [newGosterge, setNewGosterge] = useState<Record<number, string>>({});
+
+  const addGosterge = (seviyeIndex: number) => {
+    const text = (newGosterge[seviyeIndex] || "").trim();
+    if (!text) return;
+    const updated = form.seviyeler.map((s, i) =>
+      i === seviyeIndex ? { ...s, davranisGostergeleri: [...s.davranisGostergeleri, text] } : s
+    );
+    setForm({ ...form, seviyeler: updated });
+    setNewGosterge({ ...newGosterge, [seviyeIndex]: "" });
+  };
+
+  const removeGosterge = (seviyeIndex: number, gostergeIndex: number) => {
+    const updated = form.seviyeler.map((s, i) =>
+      i === seviyeIndex ? { ...s, davranisGostergeleri: s.davranisGostergeleri.filter((_, gi) => gi !== gostergeIndex) } : s
+    );
     setForm({ ...form, seviyeler: updated });
   };
 
