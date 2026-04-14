@@ -310,13 +310,17 @@ export default function KriterHavuzu({
                       <TableCell className="text-sm">
                         <div>
                           <span className="font-medium">{s.tanim}</span>
-                          {s.davranisGostergeleri && (
+                          {s.davranisGostergeleri.length > 0 && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="inline-block ml-1.5 h-3.5 w-3.5 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="right" className="max-w-xs">
-                                <p className="text-xs whitespace-pre-line">{s.davranisGostergeleri}</p>
+                                <ul className="text-xs space-y-0.5">
+                                  {s.davranisGostergeleri.map((g, gi) => (
+                                    <li key={gi}>• {g}</li>
+                                  ))}
+                                </ul>
                               </TooltipContent>
                             </Tooltip>
                           )}
