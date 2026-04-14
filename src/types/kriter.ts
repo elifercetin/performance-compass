@@ -11,7 +11,7 @@ export type KriterTipi = (typeof KRITER_TIPLERI)[number];
 export interface Seviye {
   seviyeNo: number; // 1-4
   tanim: string;
-  davranisGostergeleri: string;
+  davranisGostergeleri: string[];
 }
 
 export interface Kriter {
