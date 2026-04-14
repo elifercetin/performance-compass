@@ -220,7 +220,7 @@ export default function KriterHavuzu({
                     <TableCell className="font-medium text-sm">
                       <div className="flex items-center gap-1.5">
                         {k.kriterAdi}
-                        {k.davranisGostergeleri.length > 0 && (
+                        {(k.davranisGostergeleri?.length ?? 0) > 0 && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
