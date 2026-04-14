@@ -14,13 +14,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2, Plus, X, Search, ChevronDown, ChevronRight, Info, Layers } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Search, Info, Layers } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 
 interface Props {
@@ -56,7 +53,7 @@ export default function KriterHavuzu({
   const [filterGrup, setFilterGrup] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 300);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -203,10 +200,10 @@ export default function KriterHavuzu({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-8"></TableHead>
                 <TableHead>Kriter Grubu</TableHead>
                 <TableHead>Kriter Adı</TableHead>
-                <TableHead className="text-center">Seviye Sayısı</TableHead>
+                <TableHead className="text-center">Seviye</TableHead>
+                <TableHead>Seviye Tanımı</TableHead>
                 <TableHead className="text-center">Durum</TableHead>
                 <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
@@ -222,28 +219,17 @@ export default function KriterHavuzu({
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((k) => (
-                  <Collapsible key={k.id} open={expandedId === k.id} onOpenChange={(open) => setExpandedId(open ? k.id : null)} asChild>
-                    <>
-                      <TableRow className="group hover:bg-muted/30 transition-colors">
-                        <TableCell className="w-8 px-2">
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              {expandedId === k.id ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </TableCell>
+                filtered.map((k) => {
+                  const sortedSeviyeler = [...k.seviyeler].sort((a, b) => a.seviyeNo - b.seviyeNo);
+                  const rowCount = sortedSeviyeler.length || 1;
+
+                  if (sortedSeviyeler.length === 0) {
+                    return (
+                      <TableRow key={k.id} className="group hover:bg-muted/30 transition-colors">
                         <TableCell className="text-sm">{k.kriterGrubu}</TableCell>
                         <TableCell className="font-medium text-sm">{k.kriterAdi}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="text-xs font-normal">
-                            {k.seviyeler.length} Seviye
-                          </Badge>
-                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground text-xs">-</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">-</TableCell>
                         <TableCell className="text-center">
                           <Badge
                             className={`text-xs cursor-pointer transition-colors ${
@@ -258,7 +244,7 @@ export default function KriterHavuzu({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex justify-end gap-1">
                             {!readOnly && (
                               <>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
@@ -274,47 +260,90 @@ export default function KriterHavuzu({
                           </div>
                         </TableCell>
                       </TableRow>
-                      <CollapsibleContent asChild>
-                        <tr>
-                          <td colSpan={6} className="p-0">
-                            <div className="bg-muted/20 border-t border-border px-8 py-4 animate-fade-in">
-                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                {k.seviyeler
-                                  .sort((a, b) => a.seviyeNo - b.seviyeNo)
-                                  .map((s) => (
-                                    <div key={s.seviyeNo} className="rounded-lg border border-border bg-card p-3 shadow-sm hover:shadow-md transition-shadow">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-primary-foreground ${
-                                          s.seviyeNo === 1 ? "bg-destructive" :
-                                          s.seviyeNo === 2 ? "bg-warning" :
-                                          s.seviyeNo === 3 ? "bg-primary" :
-                                          "bg-success"
-                                        }`}>
-                                          {s.seviyeNo}
-                                        </span>
-                                        <span className="font-medium text-sm">{s.tanim}</span>
-                                      </div>
-                                      {s.davranisGostergeleri && (
-                                        <div className="flex items-start gap-1.5">
-                                          <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
-                                          <p className="text-xs text-muted-foreground leading-relaxed">{s.davranisGostergeleri}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
-                ))
+                    );
+                  }
+
+                  return sortedSeviyeler.map((s, i) => (
+                    <TableRow
+                      key={`${k.id}-${s.seviyeNo}`}
+                      className={`group hover:bg-muted/30 transition-colors ${i > 0 ? "border-t border-border/50" : ""}`}
+                    >
+                      {i === 0 && (
+                        <TableCell className="text-sm align-top" rowSpan={rowCount}>
+                          {k.kriterGrubu}
+                        </TableCell>
+                      )}
+                      {i === 0 && (
+                        <TableCell className="font-medium text-sm align-top" rowSpan={rowCount}>
+                          {k.kriterAdi}
+                        </TableCell>
+                      )}
+                      <TableCell className="text-center">
+                        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-primary-foreground ${
+                          s.seviyeNo === 1 ? "bg-destructive" :
+                          s.seviyeNo === 2 ? "bg-warning" :
+                          s.seviyeNo === 3 ? "bg-primary" :
+                          "bg-success"
+                        }`}>
+                          {s.seviyeNo}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>
+                          <span className="font-medium">{s.tanim}</span>
+                          {s.davranisGostergeleri && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="inline-block ml-1.5 h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="max-w-xs">
+                                <p className="text-xs whitespace-pre-line">{s.davranisGostergeleri}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                      {i === 0 && (
+                        <TableCell className="text-center align-top" rowSpan={rowCount}>
+                          <Badge
+                            className={`text-xs cursor-pointer transition-colors ${
+                              k.aktif
+                                ? "bg-success/15 text-success hover:bg-success/25 border-success/20"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                            variant="outline"
+                            onClick={() => !readOnly && onToggleAktif(k.id)}
+                          >
+                            {k.aktif ? "Aktif" : "Pasif"}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {i === 0 && (
+                        <TableCell className="text-right align-top" rowSpan={rowCount}>
+                          <div className="flex justify-end gap-1">
+                            {!readOnly && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
+                                  <Pencil className="h-3.5 w-3.5 text-primary" />
+                                </Button>
+                                {!k.kullanimda && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(k.id)}>
+                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ));
+                })
               )}
             </TableBody>
           </Table>
           <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30">
-            Toplam {filtered.length} kayıt listeleniyor
+            Toplam {filtered.length} kriter listeleniyor
           </div>
         </div>
 
