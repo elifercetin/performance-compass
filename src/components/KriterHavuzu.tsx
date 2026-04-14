@@ -53,7 +53,7 @@ export default function KriterHavuzu({
   const [filterGrup, setFilterGrup] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 300);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
