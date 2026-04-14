@@ -467,13 +467,31 @@ export default function KriterHavuzu({
                           </Button>
                         )}
                       </div>
-                      <Textarea
-                        placeholder="Davranış göstergeleri (her satıra bir gösterge yazabilirsiniz)"
-                        value={s.davranisGostergeleri}
-                        onChange={(e) => updateSeviye(i, "davranisGostergeleri", e.target.value)}
-                        className="min-h-[60px] text-sm"
-                        rows={2}
-                      />
+                      {/* Davranış Göstergeleri */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Davranış Göstergeleri</Label>
+                        {s.davranisGostergeleri.map((g, gi) => (
+                          <div key={gi} className="flex items-center gap-1.5 pl-2">
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-sm flex-1">{g}</span>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeGosterge(i, gi)}>
+                              <X className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Davranış göstergesi ekle..."
+                            value={newGosterge[i] || ""}
+                            onChange={(e) => setNewGosterge({ ...newGosterge, [i]: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGosterge(i); } }}
+                            className="h-8 text-sm flex-1"
+                          />
+                          <Button type="button" variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={() => addGosterge(i)}>
+                            <Plus className="mr-1 h-3 w-3" /> Ekle
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
