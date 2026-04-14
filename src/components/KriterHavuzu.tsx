@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
-import { Kriter, Seviye, VARSAYILAN_KRITER_GRUPLARI } from "@/types/kriter";
+import { Kriter, VARSAYILAN_KRITER_GRUPLARI, SEVIYE_TANIMLARI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -11,7 +10,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -34,8 +33,6 @@ interface Props {
 
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
-const EMPTY_SEVIYE: Seviye = { seviyeNo: 1, tanim: "", davranisGostergeleri: [] };
-
 const EMPTY_FORM = {
   kriterGrubu: "",
   kriterGrubuCustom: "",
@@ -43,7 +40,9 @@ const EMPTY_FORM = {
   donem: CURRENT_YEAR,
   aktif: true,
   agirlikPuani: 0,
-  seviyeler: [{ ...EMPTY_SEVIYE }] as Seviye[],
+  seviye: 0,
+  seviyeTanimi: "",
+  davranisGostergeleri: [] as string[],
 };
 
 export default function KriterHavuzu({
@@ -53,13 +52,12 @@ export default function KriterHavuzu({
   const [filterGrup, setFilterGrup] = useState<string>("Tumu");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 300);
-  
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [newGosterge, setNewGosterge] = useState("");
 
-  // All unique groups
   const allGroups = useMemo(() => {
     const set = new Set([...VARSAYILAN_KRITER_GRUPLARI, ...kriterler.map(k => k.kriterGrubu)]);
     return Array.from(set);
@@ -79,6 +77,7 @@ export default function KriterHavuzu({
   const openAdd = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setNewGosterge("");
     setDialogOpen(true);
   };
 
@@ -91,8 +90,11 @@ export default function KriterHavuzu({
       donem: k.donem || CURRENT_YEAR,
       aktif: k.aktif,
       agirlikPuani: k.agirlikPuani,
-      seviyeler: k.seviyeler.length > 0 ? [...k.seviyeler] : [{ ...EMPTY_SEVIYE }],
+      seviye: k.seviye,
+      seviyeTanimi: k.seviyeTanimi,
+      davranisGostergeleri: [...k.davranisGostergeleri],
     });
+    setNewGosterge("");
     setDialogOpen(true);
   };
 
@@ -100,14 +102,15 @@ export default function KriterHavuzu({
 
   const handleSave = () => {
     if (!resolvedGrup || !form.kriterAdi || !form.donem) return;
-    const validSeviyeler = form.seviyeler.filter(s => s.tanim.trim());
     const data = {
       kriterGrubu: resolvedGrup,
       kriterAdi: form.kriterAdi,
       donem: form.donem,
       aktif: form.aktif,
       agirlikPuani: form.agirlikPuani,
-      seviyeler: validSeviyeler,
+      seviye: form.seviye,
+      seviyeTanimi: form.seviyeTanimi,
+      davranisGostergeleri: form.davranisGostergeleri,
     };
     if (editingId) {
       onUpdate(editingId, data);
@@ -117,42 +120,15 @@ export default function KriterHavuzu({
     setDialogOpen(false);
   };
 
-  const addSeviye = () => {
-    const nextNo = form.seviyeler.length + 1;
-    if (nextNo > 4) return;
-    setForm({
-      ...form,
-      seviyeler: [...form.seviyeler, { seviyeNo: nextNo, tanim: "", davranisGostergeleri: [] }],
-    });
-  };
-
-  const removeSeviye = (index: number) => {
-    const updated = form.seviyeler.filter((_, i) => i !== index).map((s, i) => ({ ...s, seviyeNo: i + 1 }));
-    setForm({ ...form, seviyeler: updated });
-  };
-
-  const updateSeviye = (index: number, field: keyof Seviye, value: string | number | string[]) => {
-    const updated = form.seviyeler.map((s, i) => i === index ? { ...s, [field]: value } : s);
-    setForm({ ...form, seviyeler: updated });
-  };
-
-  const [newGosterge, setNewGosterge] = useState<Record<number, string>>({});
-
-  const addGosterge = (seviyeIndex: number) => {
-    const text = (newGosterge[seviyeIndex] || "").trim();
+  const addGosterge = () => {
+    const text = newGosterge.trim();
     if (!text) return;
-    const updated = form.seviyeler.map((s, i) =>
-      i === seviyeIndex ? { ...s, davranisGostergeleri: [...s.davranisGostergeleri, text] } : s
-    );
-    setForm({ ...form, seviyeler: updated });
-    setNewGosterge({ ...newGosterge, [seviyeIndex]: "" });
+    setForm({ ...form, davranisGostergeleri: [...form.davranisGostergeleri, text] });
+    setNewGosterge("");
   };
 
-  const removeGosterge = (seviyeIndex: number, gostergeIndex: number) => {
-    const updated = form.seviyeler.map((s, i) =>
-      i === seviyeIndex ? { ...s, davranisGostergeleri: s.davranisGostergeleri.filter((_, gi) => gi !== gostergeIndex) } : s
-    );
-    setForm({ ...form, seviyeler: updated });
+  const removeGosterge = (index: number) => {
+    setForm({ ...form, davranisGostergeleri: form.davranisGostergeleri.filter((_, i) => i !== index) });
   };
 
   const clearFilters = () => {
@@ -160,7 +136,7 @@ export default function KriterHavuzu({
     setSearchText("");
   };
 
-  const isFormValid = !!resolvedGrup && !!form.kriterAdi && !!form.donem && form.seviyeler.some(s => s.tanim.trim());
+  const isFormValid = !!resolvedGrup && !!form.kriterAdi && !!form.donem && form.seviye > 0 && !!form.seviyeTanimi;
 
   return (
     <TooltipProvider>
@@ -238,130 +214,71 @@ export default function KriterHavuzu({
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((k) => {
-                  const sortedSeviyeler = [...k.seviyeler].sort((a, b) => a.seviyeNo - b.seviyeNo);
-                  const rowCount = sortedSeviyeler.length || 1;
-
-                  if (sortedSeviyeler.length === 0) {
-                    return (
-                      <TableRow key={k.id} className="group hover:bg-muted/30 transition-colors">
-                        <TableCell className="text-sm">{k.kriterGrubu}</TableCell>
-                        <TableCell className="font-medium text-sm">{k.kriterAdi}</TableCell>
-                        <TableCell className="text-center text-muted-foreground text-xs">-</TableCell>
-                        <TableCell className="text-muted-foreground text-xs">-</TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            className={`text-xs cursor-pointer transition-colors ${
-                              k.aktif
-                                ? "bg-success/15 text-success hover:bg-success/25 border-success/20"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            }`}
-                            variant="outline"
-                            onClick={() => !readOnly && onToggleAktif(k.id)}
-                          >
-                            {k.aktif ? "Aktif" : "Pasif"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            {!readOnly && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
-                                  <Pencil className="h-3.5 w-3.5 text-primary" />
-                                </Button>
-                                {!k.kullanimda && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(k.id)}>
-                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                  </Button>
-                                )}
-                              </>
+                filtered.map((k) => (
+                  <TableRow key={k.id} className="group hover:bg-muted/30 transition-colors">
+                    <TableCell className="text-sm">{k.kriterGrubu}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      <div className="flex items-center gap-1.5">
+                        {k.kriterAdi}
+                        {k.davranisGostergeleri.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-xs">
+                              <p className="text-xs font-medium mb-1">Davranış Göstergeleri:</p>
+                              <ul className="text-xs space-y-0.5">
+                                {k.davranisGostergeleri.map((g, gi) => (
+                                  <li key={gi}>• {g}</li>
+                                ))}
+                              </ul>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-primary-foreground ${
+                        k.seviye === 1 ? "bg-destructive" :
+                        k.seviye === 2 ? "bg-warning" :
+                        k.seviye === 3 ? "bg-primary" :
+                        "bg-success"
+                      }`}>
+                        {k.seviye}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm">{k.seviyeTanimi}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        className={`text-xs cursor-pointer transition-colors ${
+                          k.aktif
+                            ? "bg-success/15 text-success hover:bg-success/25 border-success/20"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                        variant="outline"
+                        onClick={() => !readOnly && onToggleAktif(k.id)}
+                      >
+                        {k.aktif ? "Aktif" : "Pasif"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!readOnly && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
+                              <Pencil className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                            {!k.kullanimda && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(k.id)}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
                             )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-
-                  return sortedSeviyeler.map((s, i) => (
-                    <TableRow
-                      key={`${k.id}-${s.seviyeNo}`}
-                      className={`group hover:bg-muted/30 transition-colors ${i > 0 ? "border-t border-border/50" : ""}`}
-                    >
-                      {i === 0 && (
-                        <TableCell className="text-sm align-top" rowSpan={rowCount}>
-                          {k.kriterGrubu}
-                        </TableCell>
-                      )}
-                      {i === 0 && (
-                        <TableCell className="font-medium text-sm align-top" rowSpan={rowCount}>
-                          {k.kriterAdi}
-                        </TableCell>
-                      )}
-                      <TableCell className="text-center">
-                        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-primary-foreground ${
-                          s.seviyeNo === 1 ? "bg-destructive" :
-                          s.seviyeNo === 2 ? "bg-warning" :
-                          s.seviyeNo === 3 ? "bg-primary" :
-                          "bg-success"
-                        }`}>
-                          {s.seviyeNo}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div>
-                          <span className="font-medium">{s.tanim}</span>
-                          {s.davranisGostergeleri.length > 0 && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="inline-block ml-1.5 h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent side="right" className="max-w-xs">
-                                <ul className="text-xs space-y-0.5">
-                                  {s.davranisGostergeleri.map((g, gi) => (
-                                    <li key={gi}>• {g}</li>
-                                  ))}
-                                </ul>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </TableCell>
-                      {i === 0 && (
-                        <TableCell className="text-center align-top" rowSpan={rowCount}>
-                          <Badge
-                            className={`text-xs cursor-pointer transition-colors ${
-                              k.aktif
-                                ? "bg-success/15 text-success hover:bg-success/25 border-success/20"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            }`}
-                            variant="outline"
-                            onClick={() => !readOnly && onToggleAktif(k.id)}
-                          >
-                            {k.aktif ? "Aktif" : "Pasif"}
-                          </Badge>
-                        </TableCell>
-                      )}
-                      {i === 0 && (
-                        <TableCell className="text-right align-top" rowSpan={rowCount}>
-                          <div className="flex justify-end gap-1">
-                            {!readOnly && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}>
-                                  <Pencil className="h-3.5 w-3.5 text-primary" />
-                                </Button>
-                                {!k.kullanimda && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(k.id)}>
-                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ));
-                })
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -372,12 +289,15 @@ export default function KriterHavuzu({
 
         {/* Add/Edit Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg">{editingId ? "Kriter Düzenle" : "Yeni Kriter Ekle"}</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Kriter bilgilerini girin veya güncelleyin
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-5 py-2">
-              {/* Kriter Grubu */}
+              {/* Row 1: Kriter Grubu */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Kriter Grubu <span className="text-destructive">*</span></Label>
                 <Select
@@ -402,7 +322,7 @@ export default function KriterHavuzu({
                 )}
               </div>
 
-              {/* Kriter Adı */}
+              {/* Row 2: Kriter Adı */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Kriter Adı <span className="text-destructive">*</span></Label>
                 <Input
@@ -412,7 +332,7 @@ export default function KriterHavuzu({
                 />
               </div>
 
-              {/* Dönem */}
+              {/* Row 3: Dönem */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Dönem <span className="text-destructive">*</span></Label>
                 <Select value={form.donem} onValueChange={(v) => setForm({ ...form, donem: v })}>
@@ -425,80 +345,70 @@ export default function KriterHavuzu({
                 </Select>
               </div>
 
-              {/* Seviyeler */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Seviyeler <span className="text-destructive">*</span></Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addSeviye}
-                    disabled={form.seviyeler.length >= 4}
-                    className="text-xs"
+              {/* Row 4: Seviye + Seviye Tanımı side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Seviye <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={form.seviye ? String(form.seviye) : ""}
+                    onValueChange={(v) => setForm({ ...form, seviye: parseInt(v) })}
                   >
-                    <Plus className="mr-1 h-3 w-3" /> Seviye Ekle
+                    <SelectTrigger><SelectValue placeholder="Seviye Seçin" /></SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4].map((n) => (
+                        <SelectItem key={n} value={String(n)}>Seviye {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Seviye Tanımı <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={form.seviyeTanimi}
+                    onValueChange={(v) => setForm({ ...form, seviyeTanimi: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seviye Tanımı Seçin" /></SelectTrigger>
+                    <SelectContent>
+                      {SEVIYE_TANIMLARI.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row 5: Davranış Göstergeleri */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Davranış Göstergeleri</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Yeni davranış göstergesi ekle..."
+                    value={newGosterge}
+                    onChange={(e) => setNewGosterge(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGosterge(); } }}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={addGosterge}>
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Ekle
                   </Button>
                 </div>
-                <div className="space-y-3">
-                  {form.seviyeler.map((s, i) => (
-                    <div key={i} className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={String(s.seviyeNo)}
-                            onValueChange={(v) => updateSeviye(i, "seviyeNo", parseInt(v))}
-                          >
-                            <SelectTrigger className="w-[100px] h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4].map((n) => (
-                                <SelectItem key={n} value={String(n)}>Seviye {n}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            placeholder="Seviye tanımı (ör: Yeterli)"
-                            value={s.tanim}
-                            onChange={(e) => updateSeviye(i, "tanim", e.target.value)}
-                            className="h-8 text-sm flex-1"
-                          />
-                        </div>
-                        {form.seviyeler.length > 1 && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 ml-2" onClick={() => removeSeviye(i)}>
-                            <X className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
-                        )}
+                {form.davranisGostergeleri.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Henüz davranış göstergesi eklenmedi. Yukarıdaki alanı kullanarak ekleyebilirsiniz.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {form.davranisGostergeleri.map((g, i) => (
+                      <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+                        <span className="text-xs text-muted-foreground font-medium">{i + 1}.</span>
+                        <span className="text-sm flex-1">{g}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeGosterge(i)}>
+                          <X className="h-3 w-3 text-destructive" />
+                        </Button>
                       </div>
-                      {/* Davranış Göstergeleri */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Davranış Göstergeleri</Label>
-                        {s.davranisGostergeleri.map((g, gi) => (
-                          <div key={gi} className="flex items-center gap-1.5 pl-2">
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-sm flex-1">{g}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeGosterge(i, gi)}>
-                              <X className="h-3 w-3 text-destructive" />
-                            </Button>
-                          </div>
-                        ))}
-                        <div className="flex items-center gap-2">
-                          <Input
-                            placeholder="Davranış göstergesi ekle..."
-                            value={newGosterge[i] || ""}
-                            onChange={(e) => setNewGosterge({ ...newGosterge, [i]: e.target.value })}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGosterge(i); } }}
-                            className="h-8 text-sm flex-1"
-                          />
-                          <Button type="button" variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={() => addGosterge(i)}>
-                            <Plus className="mr-1 h-3 w-3" /> Ekle
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter className="gap-2">
