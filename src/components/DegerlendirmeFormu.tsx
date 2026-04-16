@@ -261,9 +261,6 @@ export default function DegerlendirmeFormu({
                               </Popover>
                             )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Seviye: {kriter.seviye} · {kriter.seviyeTanimi}
-                        </p>
                       </div>
                     </div>
 
@@ -326,59 +323,27 @@ export default function DegerlendirmeFormu({
             </CardContent>
           </Card>
 
-          {/* Summary & Actions */}
+          {/* Actions */}
           <Card className="shadow-sm">
             <CardContent className="pt-5 pb-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Toplam Puan</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {toplamPuan}
-                    </p>
-                  </div>
-                  <div className="h-8 w-px bg-border" />
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">
-                      Ortalama Puan
-                    </p>
-                    <p className="text-2xl font-bold text-primary">
-                      {ortalamaPuan}
-                    </p>
-                  </div>
-                  <div className="h-8 w-px bg-border" />
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">
-                      Değerlendirilen
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {doldurulmus}
-                      <span className="text-sm text-muted-foreground font-normal">
-                        /{toplamKriter}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleKaydet}
-                    disabled={readOnly}
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Kaydet
-                  </Button>
-                  <Button
-                    onClick={handleTamamla}
-                    disabled={readOnly || !tumDolduruldu}
-                    className="gap-2"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Değerlendirmeyi Tamamla
-                  </Button>
-                </div>
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleKaydet}
+                  disabled={readOnly}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  Kaydet
+                </Button>
+                <Button
+                  onClick={handleTamamla}
+                  disabled={readOnly || !tumDolduruldu}
+                  className="gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Değerlendirmeyi Tamamla
+                </Button>
               </div>
             </CardContent>
           </Card>
