@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { useKriterStore } from "@/hooks/useKriterStore";
 import KriterHavuzu from "@/components/KriterHavuzu";
 import AgirlikPuanGirisi from "@/components/AgirlikPuanGirisi";
-import { BookOpen, BarChart3, CheckCircle } from "lucide-react";
+import DegerlendirmeFormu from "@/components/DegerlendirmeFormu";
+import { BookOpen, BarChart3, CheckCircle, ClipboardCheck } from "lucide-react";
 
 const DONEMLER = ["2025", "2024", "2023"];
 const CURRENT_DONEM = "2025";
@@ -51,7 +52,7 @@ export default function Index() {
       {/* Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="havuz" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 rounded-xl">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/60 p-1 rounded-xl">
             <TabsTrigger value="havuz" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <BookOpen className="h-4 w-4" />
               Kriter Havuzu
@@ -59,6 +60,10 @@ export default function Index() {
             <TabsTrigger value="agirlik" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <BarChart3 className="h-4 w-4" />
               Ağırlık Girişi
+            </TabsTrigger>
+            <TabsTrigger value="degerlendirme" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
+              <ClipboardCheck className="h-4 w-4" />
+              Değerlendirme
             </TabsTrigger>
           </TabsList>
 
@@ -80,6 +85,16 @@ export default function Index() {
             <AgirlikPuanGirisi
               kriterler={kriterler}
               onSave={handleSaveWeights}
+              readOnly={readOnly}
+              donem={donem}
+              onDonemChange={setDonem}
+              donemler={DONEMLER}
+            />
+          </TabsContent>
+
+          <TabsContent value="degerlendirme">
+            <DegerlendirmeFormu
+              kriterler={kriterler}
               readOnly={readOnly}
               donem={donem}
               onDonemChange={setDonem}
