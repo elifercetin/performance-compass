@@ -48,10 +48,13 @@ export default function DegerlendirmeFormu({
   donemler,
   readOnly = false,
 }: Props) {
-  const [personelAdi, setPersonelAdi] = useState("");
-  const [pozisyon, setPozisyon] = useState("");
   const [puanlar, setPuanlar] = useState<Record<string, number>>({});
   const [aciklama, setAciklama] = useState("");
+  const [acikGosterge, setAcikGosterge] = useState<Kriter | null>(null);
+
+  // Sabit bilgi alanları (filtre değil, sadece gösterim)
+  const personelAdi = "Ahmet Yılmaz";
+  const pozisyon = "Bakım Teknisyeni";
 
   const aktifKriterler = useMemo(
     () => kriterler.filter((k) => k.aktif),
