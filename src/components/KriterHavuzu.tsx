@@ -16,8 +16,12 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2, Plus, X, Search, Info, Layers } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Search, Info, Layers, FileSpreadsheet, Download } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useRef } from "react";
+import * as XLSX from "xlsx";
+import { toast } from "@/hooks/use-toast";
+import { SEVIYE_TANIMLARI as SEVIYE_TANIMLARI_LIST } from "@/types/kriter";
 
 interface Props {
   kriterler: Kriter[];
