@@ -6,8 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Kriter } from "@/types/kriter";
@@ -44,10 +48,13 @@ export default function DegerlendirmeFormu({
   donemler,
   readOnly = false,
 }: Props) {
-  const [personelAdi, setPersonelAdi] = useState("");
-  const [pozisyon, setPozisyon] = useState("");
   const [puanlar, setPuanlar] = useState<Record<string, number>>({});
   const [aciklama, setAciklama] = useState("");
+  const [acikGosterge, setAcikGosterge] = useState<Kriter | null>(null);
+
+  // Sabit bilgi alanları (filtre değil, sadece gösterim)
+  const personelAdi = "Ahmet Yılmaz";
+  const pozisyon = "Bakım Teknisyeni";
 
   const aktifKriterler = useMemo(
     () => kriterler.filter((k) => k.aktif),
@@ -112,64 +119,39 @@ export default function DegerlendirmeFormu({
         </p>
       </div>
 
-      {/* Info Card */}
+      {/* Info Card - sadece bilgi gösterimi */}
       <Card className="shadow-sm">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Dönem */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 Dönem
-              </Label>
-              <Select value={donem} onValueChange={onDonemChange}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {donemler.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              </div>
+              <p className="text-sm font-medium text-foreground">{donem}</p>
             </div>
 
             {/* Pozisyon */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Briefcase className="h-3.5 w-3.5" />
                 Pozisyon
-              </Label>
-              <Input
-                value={pozisyon}
-                onChange={(e) => setPozisyon(e.target.value)}
-                placeholder="Pozisyon giriniz..."
-                className="h-9"
-                disabled={readOnly}
-              />
+              </div>
+              <p className="text-sm font-medium text-foreground">{pozisyon}</p>
             </div>
 
             {/* Personel */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 Değerlendirilen Personel
-              </Label>
-              <Input
-                value={personelAdi}
-                onChange={(e) => setPersonelAdi(e.target.value)}
-                placeholder="Ad Soyad giriniz..."
-                className="h-9"
-                disabled={readOnly}
-              />
+              </div>
+              <p className="text-sm font-medium text-foreground">{personelAdi}</p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Progress */}
       <Card className="shadow-sm">
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between mb-2">
@@ -230,35 +212,14 @@ export default function DegerlendirmeFormu({
                           </span>
                           {kriter.davranisGostergeleri &&
                             kriter.davranisGostergeleri.length > 0 && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button className="inline-flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
-                                    <Info className="h-3.5 w-3.5" />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-72 text-sm"
-                                  side="right"
-                                  align="start"
-                                >
-                                  <p className="font-medium mb-2 text-foreground">
-                                    Davranış Göstergeleri
-                                  </p>
-                                  <ul className="space-y-1.5">
-                                    {kriter.davranisGostergeleri.map(
-                                      (g, i) => (
-                                        <li
-                                          key={i}
-                                          className="flex items-start gap-2 text-muted-foreground"
-                                        >
-                                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                                          {g}
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                </PopoverContent>
-                              </Popover>
+                              <button
+                                type="button"
+                                onClick={() => setAcikGosterge(kriter)}
+                                className="inline-flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                aria-label="Davranış göstergelerini görüntüle"
+                              >
+                                <Info className="h-3.5 w-3.5" />
+                              </button>
                             )}
                         </div>
                       </div>
@@ -349,6 +310,36 @@ export default function DegerlendirmeFormu({
           </Card>
         </>
       )}
+
+      {/* Davranış Göstergeleri Modal */}
+      <Dialog open={!!acikGosterge} onOpenChange={(o) => !o && setAcikGosterge(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              Davranış Göstergeleri
+            </DialogTitle>
+            {acikGosterge && (
+              <p className="text-sm text-muted-foreground pt-1">
+                {acikGosterge.kriterAdi}
+              </p>
+            )}
+          </DialogHeader>
+          {acikGosterge && (
+            <ul className="space-y-2 pt-2">
+              {acikGosterge.davranisGostergeleri.map((g, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-sm"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="text-muted-foreground">{g}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
