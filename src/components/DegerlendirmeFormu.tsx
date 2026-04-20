@@ -212,35 +212,14 @@ export default function DegerlendirmeFormu({
                           </span>
                           {kriter.davranisGostergeleri &&
                             kriter.davranisGostergeleri.length > 0 && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button className="inline-flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
-                                    <Info className="h-3.5 w-3.5" />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-72 text-sm"
-                                  side="right"
-                                  align="start"
-                                >
-                                  <p className="font-medium mb-2 text-foreground">
-                                    Davranış Göstergeleri
-                                  </p>
-                                  <ul className="space-y-1.5">
-                                    {kriter.davranisGostergeleri.map(
-                                      (g, i) => (
-                                        <li
-                                          key={i}
-                                          className="flex items-start gap-2 text-muted-foreground"
-                                        >
-                                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                                          {g}
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                </PopoverContent>
-                              </Popover>
+                              <button
+                                type="button"
+                                onClick={() => setAcikGosterge(kriter)}
+                                className="inline-flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                aria-label="Davranış göstergelerini görüntüle"
+                              >
+                                <Info className="h-3.5 w-3.5" />
+                              </button>
                             )}
                         </div>
                       </div>
