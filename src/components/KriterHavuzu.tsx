@@ -239,9 +239,24 @@ export default function KriterHavuzu({
               <X className="mr-1 h-3.5 w-3.5" /> Temizle
             </Button>
             {!readOnly && (
-              <Button onClick={openAdd} size="sm" className="shadow-sm">
-                <Plus className="mr-1 h-3.5 w-3.5" /> Yeni Kriter
-              </Button>
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="mr-1 h-3.5 w-3.5" /> Şablon
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleImportClick}>
+                  <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel ile Aktar
+                </Button>
+                <Button onClick={openAdd} size="sm" className="shadow-sm">
+                  <Plus className="mr-1 h-3.5 w-3.5" /> Yeni Kriter
+                </Button>
+              </>
             )}
           </div>
         </div>
