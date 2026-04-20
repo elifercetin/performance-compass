@@ -119,64 +119,39 @@ export default function DegerlendirmeFormu({
         </p>
       </div>
 
-      {/* Info Card */}
+      {/* Info Card - sadece bilgi gösterimi */}
       <Card className="shadow-sm">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Dönem */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 Dönem
-              </Label>
-              <Select value={donem} onValueChange={onDonemChange}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {donemler.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              </div>
+              <p className="text-sm font-medium text-foreground">{donem}</p>
             </div>
 
             {/* Pozisyon */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Briefcase className="h-3.5 w-3.5" />
                 Pozisyon
-              </Label>
-              <Input
-                value={pozisyon}
-                onChange={(e) => setPozisyon(e.target.value)}
-                placeholder="Pozisyon giriniz..."
-                className="h-9"
-                disabled={readOnly}
-              />
+              </div>
+              <p className="text-sm font-medium text-foreground">{pozisyon}</p>
             </div>
 
             {/* Personel */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 Değerlendirilen Personel
-              </Label>
-              <Input
-                value={personelAdi}
-                onChange={(e) => setPersonelAdi(e.target.value)}
-                placeholder="Ad Soyad giriniz..."
-                className="h-9"
-                disabled={readOnly}
-              />
+              </div>
+              <p className="text-sm font-medium text-foreground">{personelAdi}</p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Progress */}
       <Card className="shadow-sm">
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between mb-2">
