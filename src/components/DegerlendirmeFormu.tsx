@@ -310,6 +310,36 @@ export default function DegerlendirmeFormu({
           </Card>
         </>
       )}
+
+      {/* Davranış Göstergeleri Modal */}
+      <Dialog open={!!acikGosterge} onOpenChange={(o) => !o && setAcikGosterge(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              Davranış Göstergeleri
+            </DialogTitle>
+            {acikGosterge && (
+              <p className="text-sm text-muted-foreground pt-1">
+                {acikGosterge.kriterAdi}
+              </p>
+            )}
+          </DialogHeader>
+          {acikGosterge && (
+            <ul className="space-y-2 pt-2">
+              {acikGosterge.davranisGostergeleri.map((g, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-sm"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="text-muted-foreground">{g}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
