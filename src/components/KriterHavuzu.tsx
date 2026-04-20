@@ -61,6 +61,58 @@ export default function KriterHavuzu({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [newGosterge, setNewGosterge] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const downloadTemplate = () => {
+    const headers = [["Kriter Grubu", "Kriter Adı", "Dönem", "Seviye", "Seviye Tanımı", "Davranış Göstergeleri (| ile ayır)", "Aktif (Evet/Hayır)"]];
+    const example = [["Teknik Bilgi ve Beceri", "Örnek Kriter", CURRENT_YEAR, 2, "Orta seviye", "Gösterge 1|Gösterge 2", "Evet"]];
+    const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kriterler");
+    XLSX.writeFile(wb, "kriter-sablonu.xlsx");
+  };
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: "" });
+      let count = 0;
+      let skipped = 0;
+      rows.forEach((r) => {
+        const grup = String(r["Kriter Grubu"] ?? "").trim();
+        const ad = String(r["Kriter Adı"] ?? r["Kriter Adi"] ?? "").trim();
+        const dnm = String(r["Dönem"] ?? r["Donem"] ?? CURRENT_YEAR).trim();
+        const sev = parseInt(String(r["Seviye"] ?? "0"));
+        const sevTanim = String(r["Seviye Tanımı"] ?? r["Seviye Tanimi"] ?? "").trim();
+        const gosterRaw = String(r["Davranış Göstergeleri (| ile ayır)"] ?? r["Davranış Göstergeleri"] ?? "").trim();
+        const aktifRaw = String(r["Aktif (Evet/Hayır)"] ?? r["Aktif"] ?? "Evet").trim().toLowerCase();
+        if (!grup || !ad || !sev || !sevTanim) { skipped++; return; }
+        const tanim = SEVIYE_TANIMLARI_LIST.includes(sevTanim) ? sevTanim : SEVIYE_TANIMLARI_LIST[Math.min(sev - 1, 3)];
+        onAdd({
+          kriterGrubu: grup,
+          kriterAdi: ad,
+          donem: dnm,
+          seviye: sev,
+          seviyeTanimi: tanim,
+          davranisGostergeleri: gosterRaw ? gosterRaw.split("|").map((s) => s.trim()).filter(Boolean) : [],
+          aktif: aktifRaw === "evet" || aktifRaw === "true" || aktifRaw === "1",
+          agirlikPuani: 0,
+        });
+        count++;
+      });
+      toast({ title: "İçe aktarma tamamlandı", description: `${count} kriter eklendi${skipped ? `, ${skipped} satır atlandı` : ""}.` });
+    } catch (err) {
+      toast({ title: "İçe aktarma hatası", description: "Dosya okunamadı veya format hatalı.", variant: "destructive" });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const allGroups = useMemo(() => {
     const set = new Set([...VARSAYILAN_KRITER_GRUPLARI, ...kriterler.map(k => k.kriterGrubu)]);
