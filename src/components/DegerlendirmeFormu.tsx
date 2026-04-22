@@ -176,9 +176,9 @@ export default function DegerlendirmeFormu({
                               </button>
                             )}
                         </div>
-                        {kriter.aciklama && (
+                        {kriter.davranisGostergeleri?.[0] && (
                           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                            {kriter.aciklama}
+                            {kriter.davranisGostergeleri[0]}
                           </p>
                         )}
                       </div>
