@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -26,11 +25,11 @@ import {
 } from "lucide-react";
 
 const OLCEK = [
-  { value: "1", label: "Hiçbir Zaman Göstermez" },
-  { value: "2", label: "Nadiren Gösterir" },
-  { value: "3", label: "Genelde Gösterir" },
-  { value: "4", label: "Çoğunlukla Gösterir" },
-  { value: "5", label: "Her Zaman Gösterir" },
+  { value: "1", label: "Hiçbir Zaman\nGöstermez" },
+  { value: "2", label: "Nadiren\nGösterir" },
+  { value: "3", label: "Genelde\nGösterir" },
+  { value: "4", label: "Çoğunlukla\nGösterir" },
+  { value: "5", label: "Her Zaman\nGösterir" },
 ] as const;
 
 interface Props {
@@ -50,6 +49,7 @@ export default function DegerlendirmeFormu({
 }: Props) {
   const [puanlar, setPuanlar] = useState<Record<string, number>>({});
   const [aciklama, setAciklama] = useState("");
+  const [yorumlar, setYorumlar] = useState<Record<string, string>>({});
   const [acikGosterge, setAcikGosterge] = useState<Kriter | null>(null);
 
   // Sabit bilgi alanları (filtre değil, sadece gösterim)
@@ -85,6 +85,10 @@ export default function DegerlendirmeFormu({
     setPuanlar((prev) => ({ ...prev, [kriterId]: Number(value) }));
   };
 
+  const handleYorumChange = (kriterId: string, value: string) => {
+    setYorumlar((prev) => ({ ...prev, [kriterId]: value }));
+  };
+
   const tumDolduruldu = doldurulmus === toplamKriter && toplamKriter > 0;
 
   const handleKaydet = () => {
@@ -104,67 +108,37 @@ export default function DegerlendirmeFormu({
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
+      {/* Info Card - üst bilgi şeridi */}
+      <Card className="shadow-sm">
+        <CardContent className="pt-6 pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Dönem:</div>
+              <p className="text-base font-medium text-foreground">{donem}</p>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Pozisyon:</div>
+              <span className="inline-block rounded-md bg-muted px-3 py-1 text-sm font-medium text-foreground">
+                {pozisyon}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">
+                Değerlendirilen Personelin Adı Soyadı:
+              </div>
+              <p className="text-base font-medium text-foreground">{personelAdi}</p>
+            </div>
           </div>
-          <h2 className="text-xl font-semibold text-foreground">
-            Kriter Bazlı Performans Değerlendirme Formu
-          </h2>
-        </div>
-        <p className="text-sm text-muted-foreground ml-12">
-          Mavi yaka çalışanlar için KBBPYS kapsamında bireysel performans değerlendirmesi yapınız.
-        </p>
+        </CardContent>
+      </Card>
+
+      {/* Tamamlanan progress */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          Tamamlanan: <span className="font-semibold text-foreground">{doldurulmus}</span> / {toplamKriter}
+        </span>
+        <Progress value={tamamlanmaYuzdesi} className="h-2 flex-1" />
       </div>
-
-      {/* Info Card - sadece bilgi gösterimi */}
-      <Card className="shadow-sm">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Dönem */}
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                Dönem
-              </div>
-              <p className="text-sm font-medium text-foreground">{donem}</p>
-            </div>
-
-            {/* Pozisyon */}
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Briefcase className="h-3.5 w-3.5" />
-                Pozisyon
-              </div>
-              <p className="text-sm font-medium text-foreground">{pozisyon}</p>
-            </div>
-
-            {/* Personel */}
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" />
-                Değerlendirilen Personel
-              </div>
-              <p className="text-sm font-medium text-foreground">{personelAdi}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="shadow-sm">
-        <CardContent className="pt-5 pb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">
-              Tamamlanma Durumu
-            </span>
-            <span className="text-sm font-semibold text-primary">
-              {doldurulmus}/{toplamKriter} kriter · %{tamamlanmaYuzdesi}
-            </span>
-          </div>
-          <Progress value={tamamlanmaYuzdesi} className="h-2.5" />
-        </CardContent>
-      </Card>
 
       {/* Criteria Groups */}
       {gruplar.length === 0 && (
@@ -176,38 +150,18 @@ export default function DegerlendirmeFormu({
       )}
 
       {gruplar.map(([grupAdi, grupKriterleri]) => {
-        const grupDoldurulmus = grupKriterleri.filter((k) => puanlar[k.id] != null).length;
         return (
-          <Card key={grupAdi} className="shadow-sm overflow-hidden">
-            <CardHeader className="pb-3 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  {grupAdi}
-                </CardTitle>
-                <Badge
-                  variant={
-                    grupDoldurulmus === grupKriterleri.length
-                      ? "default"
-                      : "secondary"
-                  }
-                  className="text-xs"
-                >
-                  {grupDoldurulmus}/{grupKriterleri.length}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {grupKriterleri.map((kriter) => (
-                  <div
-                    key={kriter.id}
-                    className="px-5 py-4 space-y-3"
-                  >
-                    {/* Kriter header */}
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">
+          <div key={grupAdi} className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">{grupAdi}</h3>
+            <div className="space-y-3">
+              {grupKriterleri.map((kriter) => (
+                <Card key={kriter.id} className="shadow-sm">
+                  <CardContent className="p-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+                      {/* Sol: kriter adı + açıklama */}
+                      <div className="lg:col-span-3 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-semibold text-foreground">
                             {kriter.kriterAdi}
                           </span>
                           {kriter.davranisGostergeleri &&
@@ -215,52 +169,89 @@ export default function DegerlendirmeFormu({
                               <button
                                 type="button"
                                 onClick={() => setAcikGosterge(kriter)}
-                                className="inline-flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                className="inline-flex items-center justify-center h-5 w-5 rounded-full text-primary hover:bg-primary/10 transition-colors"
                                 aria-label="Davranış göstergelerini görüntüle"
                               >
-                                <Info className="h-3.5 w-3.5" />
+                                <Info className="h-4 w-4" />
                               </button>
                             )}
                         </div>
+                        {kriter.davranisGostergeleri?.[0] && (
+                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                            {kriter.davranisGostergeleri[0]}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Orta: radyo daireler */}
+                      <div className="lg:col-span-6">
+                        <div className="text-xs text-muted-foreground mb-3">
+                          Yetkinlik Tanımı
+                        </div>
+                        <RadioGroup
+                          value={puanlar[kriter.id]?.toString() ?? ""}
+                          onValueChange={(v) => handlePuanChange(kriter.id, v)}
+                          className="grid grid-cols-5 gap-2"
+                          disabled={readOnly}
+                        >
+                          {OLCEK.map((o) => {
+                            const selected =
+                              puanlar[kriter.id]?.toString() === o.value;
+                            return (
+                              <Label
+                                key={o.value}
+                                className={`flex flex-col items-center gap-1.5 cursor-pointer text-center ${
+                                  readOnly ? "opacity-60 cursor-not-allowed" : ""
+                                }`}
+                              >
+                                <span
+                                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
+                                    selected
+                                      ? "border-primary bg-primary"
+                                      : "border-muted-foreground/40 bg-background hover:border-primary/60"
+                                  }`}
+                                >
+                                  {selected && (
+                                    <span className="h-2 w-2 rounded-full bg-primary-foreground" />
+                                  )}
+                                </span>
+                                <RadioGroupItem
+                                  value={o.value}
+                                  className="sr-only"
+                                />
+                                <span
+                                  className={`text-[11px] leading-tight whitespace-pre-line ${
+                                    selected
+                                      ? "text-primary font-medium"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {o.label}
+                                </span>
+                              </Label>
+                            );
+                          })}
+                        </RadioGroup>
+                      </div>
+
+                      {/* Sağ: yorum */}
+                      <div className="lg:col-span-3">
+                        <Textarea
+                          value={yorumlar[kriter.id] ?? ""}
+                          onChange={(e) =>
+                            handleYorumChange(kriter.id, e.target.value)
+                          }
+                          placeholder="Yorum ekleyiniz..."
+                          className="min-h-[90px] resize-y text-sm"
+                          disabled={readOnly}
+                        />
                       </div>
                     </div>
-
-                    {/* Rating scale */}
-                    <RadioGroup
-                      value={puanlar[kriter.id]?.toString() ?? ""}
-                      onValueChange={(v) => handlePuanChange(kriter.id, v)}
-                      className="flex flex-wrap gap-1"
-                      disabled={readOnly}
-                    >
-                      {OLCEK.map((o) => {
-                        const selected =
-                          puanlar[kriter.id]?.toString() === o.value;
-                        return (
-                          <Label
-                            key={o.value}
-                            className={`flex items-center gap-1.5 cursor-pointer rounded-lg border px-3 py-2 text-xs transition-colors ${
-                              selected
-                                ? "border-primary bg-primary/10 text-primary font-medium"
-                                : "border-border bg-background text-muted-foreground hover:border-primary/40"
-                            } ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
-                          >
-                            <RadioGroupItem
-                              value={o.value}
-                              className="sr-only"
-                            />
-                            <span className="font-semibold">{o.value}</span>
-                            <span className="hidden sm:inline">
-                              {o.label}
-                            </span>
-                          </Label>
-                        );
-                      })}
-                    </RadioGroup>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         );
       })}
 
