@@ -159,7 +159,7 @@ export default function DegerlendirmeFormu({
                   <CardContent className="p-5">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
                       {/* Sol: kriter adı + açıklama */}
-                      <div className="lg:col-span-3 min-w-0">
+                      <div className="lg:col-span-5 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-semibold text-foreground">
                             {kriter.kriterAdi}
@@ -184,7 +184,7 @@ export default function DegerlendirmeFormu({
                       </div>
 
                       {/* Orta: radyo daireler */}
-                      <div className="lg:col-span-6">
+                      <div className="lg:col-span-7">
                         <RadioGroup
                           value={puanlar[kriter.id]?.toString() ?? ""}
                           onValueChange={(v) => handlePuanChange(kriter.id, v)}
@@ -229,19 +229,6 @@ export default function DegerlendirmeFormu({
                             );
                           })}
                         </RadioGroup>
-                      </div>
-
-                      {/* Sağ: yorum */}
-                      <div className="lg:col-span-3">
-                        <Textarea
-                          value={yorumlar[kriter.id] ?? ""}
-                          onChange={(e) =>
-                            handleYorumChange(kriter.id, e.target.value)
-                          }
-                          placeholder="Yorum ekleyiniz..."
-                          className="min-h-[90px] resize-y text-sm"
-                          disabled={readOnly}
-                        />
                       </div>
                     </div>
                   </CardContent>
