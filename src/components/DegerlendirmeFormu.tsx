@@ -49,6 +49,7 @@ export default function DegerlendirmeFormu({
 }: Props) {
   const [puanlar, setPuanlar] = useState<Record<string, number>>({});
   const [aciklama, setAciklama] = useState("");
+  const [yorumlar, setYorumlar] = useState<Record<string, string>>({});
   const [acikGosterge, setAcikGosterge] = useState<Kriter | null>(null);
 
   // Sabit bilgi alanları (filtre değil, sadece gösterim)
@@ -82,6 +83,10 @@ export default function DegerlendirmeFormu({
 
   const handlePuanChange = (kriterId: string, value: string) => {
     setPuanlar((prev) => ({ ...prev, [kriterId]: Number(value) }));
+  };
+
+  const handleYorumChange = (kriterId: string, value: string) => {
+    setYorumlar((prev) => ({ ...prev, [kriterId]: value }));
   };
 
   const tumDolduruldu = doldurulmus === toplamKriter && toplamKriter > 0;
