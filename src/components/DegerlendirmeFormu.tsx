@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -26,11 +25,11 @@ import {
 } from "lucide-react";
 
 const OLCEK = [
-  { value: "1", label: "Hiçbir Zaman Göstermez" },
-  { value: "2", label: "Nadiren Gösterir" },
-  { value: "3", label: "Genelde Gösterir" },
-  { value: "4", label: "Çoğunlukla Gösterir" },
-  { value: "5", label: "Her Zaman Gösterir" },
+  { value: "1", label: "Hiçbir Zaman\nGöstermez" },
+  { value: "2", label: "Nadiren\nGösterir" },
+  { value: "3", label: "Genelde\nGösterir" },
+  { value: "4", label: "Çoğunlukla\nGösterir" },
+  { value: "5", label: "Her Zaman\nGösterir" },
 ] as const;
 
 interface Props {
