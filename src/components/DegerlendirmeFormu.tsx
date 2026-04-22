@@ -185,9 +185,6 @@ export default function DegerlendirmeFormu({
 
                       {/* Orta: radyo daireler */}
                       <div className="lg:col-span-6">
-                        <div className="text-xs text-muted-foreground mb-3">
-                          Yetkinlik Tanımı
-                        </div>
                         <RadioGroup
                           value={puanlar[kriter.id]?.toString() ?? ""}
                           onValueChange={(v) => handlePuanChange(kriter.id, v)}
