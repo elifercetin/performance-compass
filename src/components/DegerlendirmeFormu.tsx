@@ -22,6 +22,7 @@ import {
   Calendar,
   User,
   Briefcase,
+  UserX,
 } from "lucide-react";
 
 const OLCEK = [
@@ -106,6 +107,13 @@ export default function DegerlendirmeFormu({
     });
   };
 
+  const handleBagliCalismiyorBildir = () => {
+    toast({
+      title: "Bildirim alındı",
+      description: `${personelAdi} için bağlı çalışmıyor bildirimi kaydedildi.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Info Card - üst bilgi şeridi */}
@@ -131,6 +139,24 @@ export default function DegerlendirmeFormu({
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex min-h-[88px] items-center justify-between gap-4 rounded-lg border border-primary/40 bg-primary/5 px-5 py-4 shadow-sm sm:px-8">
+        <div className="flex items-center gap-3 text-primary">
+          <UserX className="h-5 w-5 shrink-0" />
+          <span className="text-sm font-medium sm:text-base">
+            Bu kişi bana bağlı olarak çalışmıyor
+          </span>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleBagliCalismiyorBildir}
+          disabled={readOnly}
+          className="shrink-0 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary"
+        >
+          Bildir
+        </Button>
+      </div>
 
       {/* Tamamlanan progress */}
       <div className="flex items-center gap-3">
