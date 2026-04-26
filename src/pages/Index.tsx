@@ -60,7 +60,7 @@ export default function Index() {
             </TabsTrigger>
             <TabsTrigger value="seviye" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <Grid3x3 className="h-4 w-4" />
-              Seviye Tanımlama
+              Ekip–Pozisyon Kriter Seviye
             </TabsTrigger>
             <TabsTrigger value="agirlik" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <BarChart3 className="h-4 w-4" />
