@@ -5,7 +5,8 @@ import { useKriterStore } from "@/hooks/useKriterStore";
 import KriterHavuzu from "@/components/KriterHavuzu";
 import AgirlikPuanGirisi from "@/components/AgirlikPuanGirisi";
 import DegerlendirmeFormu from "@/components/DegerlendirmeFormu";
-import { BookOpen, BarChart3, CheckCircle, ClipboardCheck } from "lucide-react";
+import EkipPozisyonKriterSeviye from "@/components/EkipPozisyonKriterSeviye";
+import { BookOpen, BarChart3, CheckCircle, ClipboardCheck, Grid3x3 } from "lucide-react";
 
 const DONEMLER = ["2025", "2024", "2023"];
 const CURRENT_DONEM = "2025";
@@ -52,10 +53,14 @@ export default function Index() {
       {/* Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="havuz" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/60 p-1 rounded-xl">
+          <TabsList className="grid w-full max-w-3xl grid-cols-4 bg-muted/60 p-1 rounded-xl">
             <TabsTrigger value="havuz" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <BookOpen className="h-4 w-4" />
               Kriter Havuzu
+            </TabsTrigger>
+            <TabsTrigger value="seviye" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
+              <Grid3x3 className="h-4 w-4" />
+              Seviye Tanımlama
             </TabsTrigger>
             <TabsTrigger value="agirlik" className="gap-2 rounded-lg data-[state=active]:shadow-sm">
               <BarChart3 className="h-4 w-4" />
@@ -74,6 +79,16 @@ export default function Index() {
               onUpdate={updateKriter}
               onDelete={deleteKriter}
               onToggleAktif={toggleAktif}
+              readOnly={readOnly}
+              donem={donem}
+              onDonemChange={setDonem}
+              donemler={DONEMLER}
+            />
+          </TabsContent>
+
+          <TabsContent value="seviye">
+            <EkipPozisyonKriterSeviye
+              kriterler={kriterler}
               readOnly={readOnly}
               donem={donem}
               onDonemChange={setDonem}
