@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useKriterStore } from "@/hooks/useKriterStore";
 import KriterHavuzu from "@/components/KriterHavuzu";
 import AgirlikPuanGirisi from "@/components/AgirlikPuanGirisi";
-import DegerlendirmeFormu from "@/components/DegerlendirmeFormu";
+import DegerlendirmeListesi from "@/components/DegerlendirmeListesi";
 import EkipPozisyonKriterSeviye from "@/components/EkipPozisyonKriterSeviye";
 import { BookOpen, BarChart3, CheckCircle, ClipboardCheck, Grid3x3 } from "lucide-react";
 
@@ -108,7 +108,7 @@ export default function Index() {
           </TabsContent>
 
           <TabsContent value="degerlendirme">
-            <DegerlendirmeFormu
+            <DegerlendirmeListesi
               kriterler={kriterler}
               readOnly={readOnly}
               donem={donem}
