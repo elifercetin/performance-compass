@@ -1,12 +1,20 @@
-import { useMemo, useState, useRef } from "react";
-import { Kriter } from "@/types/kriter";
+import { useMemo, useState } from "react";
+import { Kriter, SEVIYE_TANIMLARI } from "@/types/kriter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Save, FileSpreadsheet, Download, Users } from "lucide-react";
-import * as XLSX from "xlsx";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, RotateCcw, Pencil, Trash2, Layers, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -27,292 +35,429 @@ const EKIP_POZISYONLARI: Record<Ekip, string[]> = {
   "Lojistik": ["Forklift Operatörü", "Depo Sorumlusu", "Sevkiyat Elemanı"],
 };
 
-const SEVIYE_OPSIYONLARI = [1, 2, 3, 4, 5] as const;
+const SEVIYELER = [1, 2, 3, 4, 5] as const;
 
-type Matrix = Record<string, Record<string, number | "">>; // [pozisyon][kriterId] = seviye
+interface SeviyeKaydi {
+  id: string;
+  donem: string;
+  ekip: Ekip;
+  pozisyon: string;
+  kriterId: string;
+  kriterGrubu: string;
+  kriterAdi: string;
+  seviye: number;
+  seviyeTanimi: string;
+  davranisGostergeleri: string[];
+}
+
+interface FormState {
+  donem: string;
+  ekip: Ekip;
+  pozisyon: string;
+  kriterId: string;
+  seviye: number;
+  seviyeTanimi: string;
+  davranisGostergeleriText: string;
+}
 
 export default function EkipPozisyonKriterSeviye({
   kriterler, readOnly, donem, onDonemChange, donemler,
 }: Props) {
-  const [ekip, setEkip] = useState<Ekip>("Üretim");
-  const [matrix, setMatrix] = useState<Matrix>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Filters
+  const [filterEkip, setFilterEkip] = useState<Ekip | "">("");
+  const [filterPozisyon, setFilterPozisyon] = useState<string>("");
+  const [listed, setListed] = useState(false);
+  const [appliedFilter, setAppliedFilter] = useState<{ donem: string; ekip: Ekip; pozisyon: string } | null>(null);
 
-  const aktifKriterler = useMemo(
-    () => kriterler.filter((k) => k.aktif),
-    [kriterler]
-  );
+  // Data
+  const [kayitlar, setKayitlar] = useState<SeviyeKaydi[]>([]);
 
-  const pozisyonlar = EKIP_POZISYONLARI[ekip];
+  // Modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>({
+    donem, ekip: "Üretim", pozisyon: "", kriterId: "",
+    seviye: 1, seviyeTanimi: "", davranisGostergeleriText: "",
+  });
 
-  const getValue = (poz: string, kriterId: string): number | "" => {
-    return matrix[poz]?.[kriterId] ?? "";
-  };
+  const aktifKriterler = useMemo(() => kriterler.filter((k) => k.aktif), [kriterler]);
 
-  const setValue = (poz: string, kriterId: string, val: number | "") => {
-    setMatrix((prev) => ({
-      ...prev,
-      [poz]: { ...(prev[poz] ?? {}), [kriterId]: val },
-    }));
-  };
+  const filteredPozisyonlar = filterEkip ? EKIP_POZISYONLARI[filterEkip] : [];
+  const formPozisyonlar = form.ekip ? EKIP_POZISYONLARI[form.ekip] : [];
 
-  const fillRow = (poz: string, val: number) => {
-    setMatrix((prev) => {
-      const row: Record<string, number | ""> = { ...(prev[poz] ?? {}) };
-      aktifKriterler.forEach((k) => { row[k.id] = val; });
-      return { ...prev, [poz]: row };
-    });
-  };
+  const goruntulenenKayitlar = useMemo(() => {
+    if (!listed || !appliedFilter) return [];
+    return kayitlar.filter(
+      (k) =>
+        k.donem === appliedFilter.donem &&
+        k.ekip === appliedFilter.ekip &&
+        k.pozisyon === appliedFilter.pozisyon
+    );
+  }, [kayitlar, listed, appliedFilter]);
 
-  const fillColumn = (kriterId: string, val: number) => {
-    setMatrix((prev) => {
-      const next: Matrix = { ...prev };
-      pozisyonlar.forEach((p) => {
-        next[p] = { ...(next[p] ?? {}), [kriterId]: val };
-      });
-      return next;
-    });
-  };
-
-  const fillAll = (val: number) => {
-    setMatrix((prev) => {
-      const next: Matrix = { ...prev };
-      pozisyonlar.forEach((p) => {
-        const row: Record<string, number | ""> = { ...(next[p] ?? {}) };
-        aktifKriterler.forEach((k) => { row[k.id] = val; });
-        next[p] = row;
-      });
-      return next;
-    });
-  };
-
-  const handleSave = () => {
-    toast({
-      title: "Kaydedildi",
-      description: `${ekip} ekibi için ${pozisyonlar.length} pozisyon × ${aktifKriterler.length} kriter kaydedildi.`,
-    });
-  };
-
-  const handleExport = () => {
-    const headers = ["Ekip", "Pozisyon", ...aktifKriterler.map((k) => k.kriterAdi)];
-    const rows = pozisyonlar.map((p) => [
-      ekip,
-      p,
-      ...aktifKriterler.map((k) => getValue(p, k.id)),
-    ]);
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Seviye Tanımlama");
-    XLSX.writeFile(wb, `seviye-tanimlama-${ekip}-${donem}.xlsx`);
-  };
-
-  const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf);
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: "" });
-      let count = 0;
-      const next: Matrix = { ...matrix };
-      rows.forEach((r) => {
-        const poz = String(r["Pozisyon"] ?? "").trim();
-        if (!poz || !pozisyonlar.includes(poz)) return;
-        const row: Record<string, number | ""> = { ...(next[poz] ?? {}) };
-        aktifKriterler.forEach((k) => {
-          const v = r[k.kriterAdi];
-          const num = parseInt(String(v));
-          if (num >= 1 && num <= 5) row[k.id] = num;
-        });
-        next[poz] = row;
-        count++;
-      });
-      setMatrix(next);
-      toast({ title: "İçe aktarma tamamlandı", description: `${count} pozisyon güncellendi.` });
-    } catch {
-      toast({ title: "İçe aktarma hatası", description: "Dosya okunamadı.", variant: "destructive" });
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleListele = () => {
+    if (!filterEkip || !filterPozisyon) {
+      toast({ title: "Eksik filtre", description: "Lütfen ekip ve pozisyon seçiniz.", variant: "destructive" });
+      return;
     }
+    setAppliedFilter({ donem, ekip: filterEkip, pozisyon: filterPozisyon });
+    setListed(true);
   };
 
-  const seviyeRenk = (val: number | "") => {
-    if (val === "") return "";
-    if (val <= 1) return "bg-destructive/10 text-destructive";
-    if (val === 2) return "bg-warning/10 text-warning-foreground";
-    if (val === 3) return "bg-primary/10 text-primary";
-    return "bg-success/10 text-success";
+  const handleTemizle = () => {
+    setFilterEkip("");
+    setFilterPozisyon("");
+    setListed(false);
+    setAppliedFilter(null);
+  };
+
+  const openAddModal = () => {
+    setEditingId(null);
+    setForm({
+      donem: appliedFilter?.donem ?? donem,
+      ekip: (appliedFilter?.ekip ?? filterEkip ?? "Üretim") as Ekip,
+      pozisyon: appliedFilter?.pozisyon ?? filterPozisyon ?? "",
+      kriterId: "",
+      seviye: 1,
+      seviyeTanimi: SEVIYE_TANIMLARI[0],
+      davranisGostergeleriText: "",
+    });
+    setModalOpen(true);
+  };
+
+  const openEditModal = (k: SeviyeKaydi) => {
+    setEditingId(k.id);
+    setForm({
+      donem: k.donem,
+      ekip: k.ekip,
+      pozisyon: k.pozisyon,
+      kriterId: k.kriterId,
+      seviye: k.seviye,
+      seviyeTanimi: k.seviyeTanimi,
+      davranisGostergeleriText: k.davranisGostergeleri.join("\n"),
+    });
+    setModalOpen(true);
+  };
+
+  const handleSil = (id: string) => {
+    setKayitlar((prev) => prev.filter((k) => k.id !== id));
+    toast({ title: "Silindi", description: "Eşleştirme kaydı silindi (kriter havuzu etkilenmez)." });
+  };
+
+  const handleKaydet = () => {
+    if (!form.donem || !form.ekip || !form.pozisyon || !form.kriterId) {
+      toast({ title: "Eksik bilgi", description: "Tüm alanları doldurun.", variant: "destructive" });
+      return;
+    }
+    const kriter = aktifKriterler.find((k) => k.id === form.kriterId);
+    if (!kriter) return;
+
+    const duplicate = kayitlar.find(
+      (k) =>
+        k.id !== editingId &&
+        k.donem === form.donem &&
+        k.ekip === form.ekip &&
+        k.pozisyon === form.pozisyon &&
+        k.kriterId === form.kriterId
+    );
+    if (duplicate) {
+      toast({
+        title: "Tekrarlı kayıt",
+        description: "Bu dönem + ekip + pozisyon + kriter için zaten bir kayıt mevcut.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const davranislar = form.davranisGostergeleriText
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (editingId) {
+      setKayitlar((prev) =>
+        prev.map((k) =>
+          k.id === editingId
+            ? {
+                ...k,
+                donem: form.donem,
+                ekip: form.ekip,
+                pozisyon: form.pozisyon,
+                kriterId: form.kriterId,
+                kriterGrubu: kriter.kriterGrubu,
+                kriterAdi: kriter.kriterAdi,
+                seviye: form.seviye,
+                seviyeTanimi: form.seviyeTanimi,
+                davranisGostergeleri: davranislar,
+              }
+            : k
+        )
+      );
+      toast({ title: "Güncellendi", description: "Kriter seviyesi güncellendi." });
+    } else {
+      const yeni: SeviyeKaydi = {
+        id: crypto.randomUUID(),
+        donem: form.donem,
+        ekip: form.ekip,
+        pozisyon: form.pozisyon,
+        kriterId: form.kriterId,
+        kriterGrubu: kriter.kriterGrubu,
+        kriterAdi: kriter.kriterAdi,
+        seviye: form.seviye,
+        seviyeTanimi: form.seviyeTanimi,
+        davranisGostergeleri: davranislar,
+      };
+      setKayitlar((prev) => [...prev, yeni]);
+      toast({ title: "Eklendi", description: "Kriter seviyesi eklendi." });
+    }
+    setModalOpen(false);
+  };
+
+  const seviyeBadgeRenk = (s: number) => {
+    if (s <= 1) return "bg-destructive/10 text-destructive border-destructive/20";
+    if (s === 2) return "bg-warning/10 text-warning-foreground border-warning/20";
+    if (s === 3) return "bg-primary/10 text-primary border-primary/20";
+    return "bg-success/10 text-success border-success/20";
   };
 
   return (
     <div className="space-y-4">
-      {/* Filtreler & Aksiyonlar */}
-      <div className="flex flex-wrap items-end gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">Dönem</Label>
-          <Select value={donem} onValueChange={onDonemChange}>
-            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {donemler.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
+      {/* Üst Filtre */}
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Layers className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Filtre</h3>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">Ekip</Label>
-          <Select value={ekip} onValueChange={(v) => setEkip(v as Ekip)}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {EKIPLER.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Dönem</Label>
+            <Select value={donem} onValueChange={onDonemChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {donemler.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Ekip</Label>
+            <Select value={filterEkip} onValueChange={(v) => { setFilterEkip(v as Ekip); setFilterPozisyon(""); }}>
+              <SelectTrigger><SelectValue placeholder="Ekip seçiniz" /></SelectTrigger>
+              <SelectContent>
+                {EKIPLER.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Pozisyon</Label>
+            <Select value={filterPozisyon} onValueChange={setFilterPozisyon} disabled={!filterEkip}>
+              <SelectTrigger><SelectValue placeholder="Pozisyon seçiniz" /></SelectTrigger>
+              <SelectContent>
+                {filteredPozisyonlar.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end gap-2">
+            <Button onClick={handleListele} className="flex-1">
+              <Search className="mr-1 h-3.5 w-3.5" /> Listele
+            </Button>
+            <Button variant="outline" onClick={handleTemizle}>
+              <RotateCcw className="mr-1 h-3.5 w-3.5" /> Temizle
+            </Button>
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">Toplu Doldur</Label>
-          <Select onValueChange={(v) => fillAll(parseInt(v))}>
-            <SelectTrigger className="w-[180px]" disabled={readOnly}>
-              <SelectValue placeholder="Tüm hücrelere ata..." />
-            </SelectTrigger>
-            <SelectContent>
-              {SEVIYE_OPSIYONLARI.map((s) => (
-                <SelectItem key={s} value={String(s)}>Seviye {s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="mr-1 h-3.5 w-3.5" /> Excel'e Aktar
-          </Button>
+      </div>
+
+      {/* Liste Alanı */}
+      <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-foreground">Tanımlı Kriter Seviyeleri</h3>
+            {appliedFilter && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Badge variant="outline" className="font-normal">{appliedFilter.donem}</Badge>
+                <Badge variant="outline" className="font-normal">{appliedFilter.ekip}</Badge>
+                <Badge variant="outline" className="font-normal">{appliedFilter.pozisyon}</Badge>
+              </div>
+            )}
+          </div>
           {!readOnly && (
-            <>
-              <Button variant="outline" size="sm" onClick={handleImportClick}>
-                <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel'den Yükle
-              </Button>
-              <Button size="sm" className="shadow-sm" onClick={handleSave}>
-                <Save className="mr-1 h-3.5 w-3.5" /> Kaydet
-              </Button>
-            </>
+            <Button size="sm" onClick={openAddModal} disabled={aktifKriterler.length === 0}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> Kriter Seviyesi Ekle
+            </Button>
           )}
         </div>
-      </div>
 
-      {/* Bilgi Kartı */}
-      <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm">
-        <Users className="h-4 w-4 text-primary" />
-        <span className="text-foreground">
-          <strong>{ekip}</strong> ekibi — {pozisyonlar.length} pozisyon, {aktifKriterler.length} aktif kriter
-        </span>
-      </div>
-
-      {/* Excel Benzeri Grid */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        {aktifKriterler.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
-            <span>Aktif kriter bulunamadı. Önce Kriter Havuzu'ndan kriter aktifleştiriniz.</span>
+        {!listed ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+            <Search className="h-8 w-8 text-muted-foreground/40 mb-2" />
+            <span>Listelemek için dönem, ekip ve pozisyon seçip <strong>Listele</strong> butonuna basınız.</span>
+          </div>
+        ) : goruntulenenKayitlar.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+            <Layers className="h-8 w-8 text-muted-foreground/40 mb-2" />
+            <span>Bu pozisyon için henüz kriter seviyesi tanımlanmamış.</span>
           </div>
         ) : (
-          <div className="relative overflow-auto max-h-[calc(100vh-340px)]">
-            <table className="border-collapse w-max min-w-full text-sm">
-              <thead>
-                <tr className="bg-muted/70">
-                  <th className="sticky left-0 top-0 z-30 bg-muted border border-border px-3 py-2 text-left font-semibold w-[140px] min-w-[140px]">
-                    Ekip
-                  </th>
-                  <th className="sticky left-[140px] top-0 z-30 bg-muted border border-border px-3 py-2 text-left font-semibold w-[220px] min-w-[220px]">
-                    Pozisyon
-                  </th>
-                  {aktifKriterler.map((k) => (
-                    <th
-                      key={k.id}
-                      className="sticky top-0 z-20 bg-muted border border-border px-2 py-2 text-center font-semibold w-[160px] min-w-[160px]"
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-muted-foreground font-normal">{k.kriterGrubu}</span>
-                        <span className="text-xs leading-tight">{k.kriterAdi}</span>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-[80px]">Dönem</TableHead>
+                  <TableHead>Ekip Adı</TableHead>
+                  <TableHead>Pozisyon</TableHead>
+                  <TableHead>Kriter Grubu</TableHead>
+                  <TableHead>Kriter Adı</TableHead>
+                  <TableHead className="w-[100px] text-center">Seviye</TableHead>
+                  <TableHead>Seviye Tanımı</TableHead>
+                  <TableHead className="w-[120px] text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {goruntulenenKayitlar.map((k) => (
+                  <TableRow key={k.id}>
+                    <TableCell className="font-medium">{k.donem}</TableCell>
+                    <TableCell>{k.ekip}</TableCell>
+                    <TableCell>{k.pozisyon}</TableCell>
+                    <TableCell className="text-muted-foreground">{k.kriterGrubu}</TableCell>
+                    <TableCell className="font-medium">{k.kriterAdi}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className={`font-semibold ${seviyeBadgeRenk(k.seviye)}`}>
+                        Seviye {k.seviye}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{k.seviyeTanimi}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
                         {!readOnly && (
-                          <Select onValueChange={(v) => fillColumn(k.id, parseInt(v))}>
-                            <SelectTrigger className="h-6 text-[10px] mt-1 px-1.5">
-                              <SelectValue placeholder="Kolonu doldur" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SEVIYE_OPSIYONLARI.map((s) => (
-                                <SelectItem key={s} value={String(s)} className="text-xs">Seviye {s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pozisyonlar.map((poz, ri) => (
-                  <tr key={poz} className={ri % 2 === 0 ? "bg-background" : "bg-muted/20"}>
-                    <td className={`sticky left-0 z-10 border border-border px-3 py-2 font-medium ${ri % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
-                      {ri === 0 ? ekip : ""}
-                    </td>
-                    <td className={`sticky left-[140px] z-10 border border-border px-3 py-2 ${ri % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium">{poz}</span>
-                        {!readOnly && (
-                          <Select onValueChange={(v) => fillRow(poz, parseInt(v))}>
-                            <SelectTrigger className="h-6 w-[60px] text-[10px] px-1.5">
-                              <SelectValue placeholder="…" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SEVIYE_OPSIYONLARI.map((s) => (
-                                <SelectItem key={s} value={String(s)} className="text-xs">Seviye {s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </div>
-                    </td>
-                    {aktifKriterler.map((k) => {
-                      const val = getValue(poz, k.id);
-                      return (
-                        <td key={k.id} className="border border-border p-1 text-center">
-                          <Select
-                            value={val === "" ? "" : String(val)}
-                            onValueChange={(v) => setValue(poz, k.id, parseInt(v))}
-                            disabled={readOnly}
-                          >
-                            <SelectTrigger
-                              className={`h-8 w-full text-xs justify-center font-semibold border-0 shadow-none ${seviyeRenk(val)}`}
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditModal(k)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => handleSil(k.id)}
                             >
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SEVIYE_OPSIYONLARI.map((s) => (
-                                <SelectItem key={s} value={String(s)}>Seviye {s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                      );
-                    })}
-                  </tr>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
-        <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30">
-          {pozisyonlar.length} pozisyon × {aktifKriterler.length} kriter — yatay/dikey kaydırma destekli
-        </div>
       </div>
+
+      {/* Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId ? "Kriter Seviyesini Düzenle" : "Kriter Seviyesi Ekle"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Dönem</Label>
+              <Select value={form.donem} onValueChange={(v) => setForm((f) => ({ ...f, donem: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {donemler.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Ekip</Label>
+              <Select
+                value={form.ekip}
+                onValueChange={(v) => setForm((f) => ({ ...f, ekip: v as Ekip, pozisyon: "" }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EKIPLER.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Pozisyon</Label>
+              <Select value={form.pozisyon} onValueChange={(v) => setForm((f) => ({ ...f, pozisyon: v }))}>
+                <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
+                <SelectContent>
+                  {formPozisyonlar.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Kriter Grubu</Label>
+              <Input
+                value={aktifKriterler.find((k) => k.id === form.kriterId)?.kriterGrubu ?? ""}
+                placeholder="Kriter seçildiğinde dolar"
+                disabled
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs font-medium text-muted-foreground">Kriter Adı</Label>
+              <Select value={form.kriterId} onValueChange={(v) => setForm((f) => ({ ...f, kriterId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Kriter seçiniz" /></SelectTrigger>
+                <SelectContent>
+                  {aktifKriterler.map((k) => (
+                    <SelectItem key={k.id} value={k.id}>
+                      {k.kriterGrubu} — {k.kriterAdi}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Seviye</Label>
+              <Select
+                value={String(form.seviye)}
+                onValueChange={(v) => setForm((f) => ({ ...f, seviye: parseInt(v) }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SEVIYELER.map((s) => <SelectItem key={s} value={String(s)}>Seviye {s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Seviye Tanımı</Label>
+              <Select
+                value={form.seviyeTanimi}
+                onValueChange={(v) => setForm((f) => ({ ...f, seviyeTanimi: v }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
+                <SelectContent>
+                  {SEVIYE_TANIMLARI.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs font-medium text-muted-foreground">
+                Davranış Göstergeleri <span className="text-muted-foreground/70">(her satır bir gösterge)</span>
+              </Label>
+              <Textarea
+                rows={4}
+                value={form.davranisGostergeleriText}
+                onChange={(e) => setForm((f) => ({ ...f, davranisGostergeleriText: e.target.value }))}
+                placeholder="Örn: Prosedürlere uyuyor&#10;Tehlikeli durumları raporluyor"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              <X className="mr-1 h-3.5 w-3.5" /> İptal
+            </Button>
+            <Button onClick={handleKaydet}>Kaydet</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
